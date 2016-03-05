@@ -14,9 +14,12 @@ import qualified Data.Text as T
 import qualified Servant.API as Servant
 import qualified Servant.Client as Servant
 import qualified Data.Aeson.Types as Aeson
+import qualified Data.Proxy as Proxy
 
 import GHC.Generics (Generic())
+import Control.Monad.Trans.Either (EitherT, runEitherT)
 import Data.Aeson ((.:))
+import Servant.API ((:>))
 
 -- | The API Key. See https://github.com/Giphy/GiphyAPI
 newtype Key = Key T.Text
@@ -50,3 +53,27 @@ instance Aeson.FromJSON Gif where
       , gifSlug = slug
       , gifUrl = url
     }
+
+-- | The Giphy API
+type GiphyAPI = "v1"
+  :> "gifs"
+  :> "search"
+  :> Servant.QueryParam "api_key" Key
+  :> Servant.QueryParam "q" Query
+  :> Servant.Get '[Servant.JSON] SearchResponse
+
+api :: Proxy.Proxy GiphyAPI
+api = Proxy.Proxy
+
+search'
+  :: Maybe Key
+  -> Maybe Query
+  -> EitherT Servant.ServantError IO SearchResponse
+search' = Servant.client api host
+  where host = Servant.BaseUrl Servant.Https "api.giphy.com" 443
+
+search
+  :: Key
+  -> Query
+  -> IO (Either Servant.ServantError SearchResponse)
+search key query = runEitherT $ search' (pure key) (pure query)

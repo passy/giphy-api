@@ -23,6 +23,7 @@ library
                      , text
                      , aeson
                      , lens
+                     , either
   extensions:          DataKinds
                      , DeriveGeneric
                      , TypeOperators
