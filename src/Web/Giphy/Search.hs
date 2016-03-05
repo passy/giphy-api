@@ -30,10 +30,12 @@ newtype Query = Query T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
 
 newtype SearchResponse = SearchResponse {
-  searchItems :: [ Gif ]
+  searchItems :: [Gif]
 } deriving (Show, Eq, Ord, Generic)
 
-instance Aeson.FromJSON SearchResponse
+instance Aeson.FromJSON SearchResponse where
+  parseJSON (Aeson.Object o) =
+    SearchResponse <$> o .: "data"
 
 -- | A search response item.
 data Gif = Gif {
@@ -43,16 +45,10 @@ data Gif = Gif {
 } deriving (Show, Eq, Ord, Generic)
 
 instance Aeson.FromJSON Gif where
-  parseJSON (Aeson.Object o) = do
-    d <- o .: "data"
-    id_ <- d .: "id"
-    slug <- d .: "slug"
-    url <- d .: "url"
-    return Gif {
-        gifId = id_
-      , gifSlug = slug
-      , gifUrl = url
-    }
+  parseJSON (Aeson.Object o) =
+    Gif <$> o .: "id"
+        <*> o .: "slug"
+        <*> o .: "url"
 
 -- | The Giphy API
 type GiphyAPI = "v1"
