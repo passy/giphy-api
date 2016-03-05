@@ -1,25 +1,23 @@
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE KindSignatures             #-}
-{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TypeOperators              #-}
-{-# LANGUAGE DataKinds                  #-}
 
 module Web.Giphy.Search where
 
-import qualified Data.Text as T
-import qualified Servant.API as Servant
-import qualified Servant.Client as Servant
-import qualified Data.Aeson.Types as Aeson
-import qualified Data.Proxy as Proxy
+import qualified Data.Aeson.Types           as Aeson
+import qualified Data.Proxy                 as Proxy
+import qualified Data.Text                  as T
+import qualified Network.URI                as URI
+import qualified Servant.API                as Servant
+import qualified Servant.Client             as Servant
 
-import GHC.Generics (Generic())
-import Control.Monad.Trans.Either (EitherT, runEitherT)
-import Data.Aeson ((.:))
-import Servant.API ((:>))
+import           Control.Monad              (mzero)
+import           Control.Monad.Trans.Either (EitherT, runEitherT)
+import           Data.Aeson                 ((.:))
+import           GHC.Generics               (Generic ())
+import           Servant.API                ((:>))
 
 -- | The API Key. See https://github.com/Giphy/GiphyAPI
 newtype Key = Key T.Text
@@ -39,16 +37,16 @@ instance Aeson.FromJSON SearchResponse where
 
 -- | A search response item.
 data Gif = Gif {
-    gifId :: T.Text
+    gifId   :: T.Text
   , gifSlug :: T.Text
-  , gifUrl :: T.Text -- TODO: URL type
+  , gifUrl  :: URI.URI
 } deriving (Show, Eq, Ord, Generic)
 
 instance Aeson.FromJSON Gif where
   parseJSON (Aeson.Object o) =
     Gif <$> o .: "id"
         <*> o .: "slug"
-        <*> o .: "url"
+        <*> (maybe mzero return . URI.parseURI =<< o .: "url")
 
 -- | The Giphy API
 type GiphyAPI = "v1"
