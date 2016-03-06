@@ -1,16 +1,16 @@
-{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
-import qualified Data.Text as T
+import qualified Data.Text           as T
 import qualified Options.Applicative as Opt
 
-import           Data.Version             (Version (), showVersion)
-import Control.Applicative ((<**>))
-import Paths_givegif (version)
+import           Control.Applicative ((<**>))
+import           Data.Version        (Version (), showVersion)
+import           Paths_givegif       (version)
 
-import Data.Monoid ((<>))
-import qualified Web.Giphy.Search as Giphy
+import           Data.Monoid         ((<>))
+import qualified Web.Giphy           as Giphy
 
 data Options = Options
   { query :: T.Text

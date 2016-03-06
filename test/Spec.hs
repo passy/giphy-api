@@ -15,7 +15,7 @@ import qualified Data.Text.IO         as TIO
 import           Network.URI          (parseURI)
 import           Test.Hspec
 
-import qualified Web.Giphy.Search     as Search
+import qualified Web.Giphy            as Giphy
 
 readFixture :: forall s b. FilePath -> IO BS.ByteString
 readFixture path = do
@@ -24,20 +24,20 @@ readFixture path = do
 
 main :: IO ()
 main = hspec $ do
-  describe "Search" $ do
+  describe "Giphy" $ do
     describe "JSON Parsing" $ do
 
       it "parses a search response" $ do
         resp <- readFixture "search_response.json"
         let item = case Aeson.eitherDecode resp of
                       Left e -> error e
-                      Right search -> head $ Search.searchItems search
+                      Right search -> head $ Giphy.searchItems search
 
-        Search.gifId item `shouldBe` "QgcQLZa6glP2w"
-        Search.gifSlug item `shouldBe` "cat-funny-QgcQLZa6glP2w"
-        Search.gifUrl item `shouldBe` (fromJust $ parseURI "https://giphy.com/gifs/cat-funny-QgcQLZa6glP2w")
+        Giphy.gifId item `shouldBe` "QgcQLZa6glP2w"
+        Giphy.gifSlug item `shouldBe` "cat-funny-QgcQLZa6glP2w"
+        Giphy.gifUrl item `shouldBe` fromJust (parseURI "https://giphy.com/gifs/cat-funny-QgcQLZa6glP2w")
 
-        let (Search.ImageMap m) = Search.gifImages item
+        let (Giphy.ImageMap m) = Giphy.gifImages item
         Map.keys m `shouldBe` [ "downsized"
                               , "downsized_large"
                               , "downsized_medium"
