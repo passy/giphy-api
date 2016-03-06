@@ -89,7 +89,7 @@ instance Aeson.FromJSON Image where
           <*> (fromInt <$> (o .:? "height"))
 
 -- | The Giphy API
-type GiphyAPI = "v2"
+type GiphyAPI = "v1"
   :> "gifs"
   :> "search"
   :> Servant.QueryParam "api_key" Key
