@@ -4,20 +4,39 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TypeOperators              #-}
 
-module Web.Giphy.Search where
+module Web.Giphy.Search
+  ( Key(..)
+  , Query(..)
+  , ImageMap(..)
+  , Gif(..)
+  , Image(..)
+  , SearchResponse(..)
+  , search
+  ) where
 
 import qualified Data.Aeson.Types           as Aeson
+import qualified Data.Map.Strict            as Map
 import qualified Data.Proxy                 as Proxy
 import qualified Data.Text                  as T
 import qualified Network.URI                as URI
 import qualified Servant.API                as Servant
 import qualified Servant.Client             as Servant
+import           Text.Read                  as Read
 
-import           Control.Monad              (mzero)
+import           Control.Monad              (MonadPlus (), mzero)
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
-import           Data.Aeson                 ((.:))
+import           Data.Aeson                 ((.:), (.:?))
 import           GHC.Generics               (Generic ())
 import           Servant.API                ((:>))
+
+maybeParse :: (Monad m, MonadPlus m) => (a -> Maybe b) -> m a -> m b
+maybeParse f = (maybe mzero return . f =<<)
+
+fromURI :: (Monad m, MonadPlus m) => m String -> m Servant.URI
+fromURI = maybeParse URI.parseURI
+
+fromInt :: (Monad m, MonadPlus m) => m String -> m Int
+fromInt = maybeParse Read.readMaybe
 
 -- | The API Key. See https://github.com/Giphy/GiphyAPI
 newtype Key = Key T.Text
@@ -37,19 +56,40 @@ instance Aeson.FromJSON SearchResponse where
 
 -- | A search response item.
 data Gif = Gif {
-    gifId   :: T.Text
-  , gifSlug :: T.Text
-  , gifUrl  :: URI.URI
+    gifId     :: T.Text
+  , gifSlug   :: T.Text
+  , gifUrl    :: URI.URI
+  , gifImages :: ImageMap
 } deriving (Show, Eq, Ord, Generic)
 
 instance Aeson.FromJSON Gif where
   parseJSON (Aeson.Object o) =
     Gif <$> o .: "id"
         <*> o .: "slug"
-        <*> (maybe mzero return . URI.parseURI =<< o .: "url")
+        <*> fromURI (o .: "url")
+        <*> o .: "images"
+
+newtype ImageMap = ImageMap (Map.Map T.Text Image)
+  deriving (Show, Eq, Ord, Generic)
+
+instance Aeson.FromJSON ImageMap
+
+data Image = Image {
+    imageUrl :: Maybe URI.URI
+  , mp4Url   :: Maybe URI.URI
+  , width    :: Maybe Int
+  , height   :: Maybe Int
+} deriving (Show, Eq, Ord, Generic)
+
+instance Aeson.FromJSON Image where
+  parseJSON (Aeson.Object o) =
+    Image <$> (fromURI <$> (o .:? "url"))
+          <*> (fromURI <$> (o .:? "mp4"))
+          <*> (fromInt <$> (o .:? "width"))
+          <*> (fromInt <$> (o .:? "height"))
 
 -- | The Giphy API
-type GiphyAPI = "v1"
+type GiphyAPI = "v2"
   :> "gifs"
   :> "search"
   :> Servant.QueryParam "api_key" Key
@@ -66,6 +106,7 @@ search'
 search' = Servant.client api host
   where host = Servant.BaseUrl Servant.Https "api.giphy.com" 443
 
+-- | Issue a search request for the given query.
 search
   :: Key
   -> Query
