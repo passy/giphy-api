@@ -2,15 +2,18 @@
 
 module Main where
 
-import qualified Data.Text           as T
-import qualified Options.Applicative as Opt
+import qualified Data.Text              as T
+import qualified Options.Applicative    as Opt
+import qualified Web.Giphy              as Giphy
 
-import           Control.Applicative ((<**>))
-import           Data.Version        (Version (), showVersion)
-import           Paths_givegif       (version)
+import           Control.Applicative    ((<**>))
+import           Data.Version           (Version (), showVersion)
+import           Paths_givegif          (version)
 
-import           Data.Monoid         ((<>))
-import qualified Web.Giphy           as Giphy
+import           Data.Monoid            ((<>))
+
+import           Control.Lens.Operators
+import           Control.Lens.Prism     (_Right)
 
 data Options = Options
   { query :: T.Text
@@ -42,6 +45,6 @@ main = Opt.execParser (cliParser version) >>= run
   where
     run :: Options -> IO ()
     run opts = do
-      -- TODO: Lenses. For everything!
-      resp <- Giphy.search apiKey (Giphy.Query $ query opts)
-      print resp
+      let q = Giphy.Query $ query opts
+      resp <- Giphy.search apiKey q
+      print $ resp ^? _Right . Giphy.searchItems

@@ -3,19 +3,22 @@
 {-# LANGUAGE OverloadedStrings         #-}
 
 import           BasicPrelude
-import           Data.Maybe           (fromJust)
-import           System.Directory     (getCurrentDirectory)
+import           Data.Maybe             (fromJust)
+import           System.Directory       (getCurrentDirectory)
 
-import qualified Data.Aeson           as Aeson
-import qualified Data.ByteString.Lazy as BS
-import qualified Data.Map.Strict      as Map
-import qualified Data.Text            as T
-import qualified Data.Text.Encoding   as TE
-import qualified Data.Text.IO         as TIO
-import           Network.URI          (parseURI)
+import qualified Data.Aeson             as Aeson
+import qualified Data.ByteString.Lazy   as BS
+import qualified Data.Map.Strict        as Map
+import qualified Data.Text              as T
+import qualified Data.Text.Encoding     as TE
+import qualified Data.Text.IO           as TIO
+import           Network.URI            (parseURI)
+
+import           Control.Lens.Operators
+import           Control.Lens.Wrapped
 import           Test.Hspec
 
-import qualified Web.Giphy            as Giphy
+import qualified Web.Giphy              as Giphy
 
 readFixture :: forall s b. FilePath -> IO BS.ByteString
 readFixture path = do
@@ -31,13 +34,13 @@ main = hspec $ do
         resp <- readFixture "search_response.json"
         let item = case Aeson.eitherDecode resp of
                       Left e -> error e
-                      Right search -> head $ Giphy.searchItems search
+                      Right search -> head $ Giphy._searchItems search
 
-        Giphy.gifId item `shouldBe` "QgcQLZa6glP2w"
-        Giphy.gifSlug item `shouldBe` "cat-funny-QgcQLZa6glP2w"
-        Giphy.gifUrl item `shouldBe` fromJust (parseURI "https://giphy.com/gifs/cat-funny-QgcQLZa6glP2w")
+        item ^. Giphy.gifId `shouldBe` "QgcQLZa6glP2w"
+        item ^. Giphy.gifSlug `shouldBe` "cat-funny-QgcQLZa6glP2w"
+        item ^. Giphy.gifUrl `shouldBe` fromJust (parseURI "https://giphy.com/gifs/cat-funny-QgcQLZa6glP2w")
 
-        let (Giphy.ImageMap m) = Giphy.gifImages item
+        let (Giphy.ImageMap m) = item ^. Giphy.gifImages
         Map.keys m `shouldBe` [ "downsized"
                               , "downsized_large"
                               , "downsized_medium"

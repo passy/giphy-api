@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeOperators              #-}
 
 module Web.Giphy
@@ -11,23 +12,34 @@ module Web.Giphy
   , Gif(..)
   , Image(..)
   , SearchResponse(..)
+  -- Lenses
+  , gifId
+  , gifSlug
+  , gifUrl
+  , gifImages
+  , imageUrl
+  , imageMp4Url
+  , imageWidth
+  , imageHeight
+  , searchItems
+  -- Actions
   , search
   ) where
-
-import qualified Data.Aeson.Types           as Aeson
-import qualified Data.Map.Strict            as Map
-import qualified Data.Proxy                 as Proxy
-import qualified Data.Text                  as T
-import qualified Network.URI                as URI
-import qualified Servant.API                as Servant
-import qualified Servant.Client             as Servant
-import           Text.Read                  as Read
 
 import           Control.Monad              (MonadPlus (), mzero)
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
 import           Data.Aeson                 ((.:), (.:?))
+import qualified Data.Aeson.Types           as Aeson
+import qualified Data.Map.Strict            as Map
+import qualified Data.Proxy                 as Proxy
+import qualified Data.Text                  as T
 import           GHC.Generics               (Generic ())
+import qualified Lens.Micro.TH              as Lens
+import qualified Network.URI                as URI
 import           Servant.API                ((:>))
+import qualified Servant.API                as Servant
+import qualified Servant.Client             as Servant
+import qualified Text.Read                  as Read
 
 maybeParse :: (Monad m, MonadPlus m) => (a -> Maybe b) -> m a -> m b
 maybeParse f = (maybe mzero return . f =<<)
@@ -46,21 +58,36 @@ newtype Key = Key T.Text
 newtype Query = Query T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
 
-newtype SearchResponse = SearchResponse {
-  searchItems :: [Gif]
+data Image = Image {
+    _imageUrl    :: Maybe URI.URI
+  , _imageMp4Url :: Maybe URI.URI
+  , _imageWidth  :: Maybe Int
+  , _imageHeight :: Maybe Int
 } deriving (Show, Eq, Ord, Generic)
 
-instance Aeson.FromJSON SearchResponse where
+Lens.makeLenses ''Image
+
+instance Aeson.FromJSON Image where
   parseJSON (Aeson.Object o) =
-    SearchResponse <$> o .: "data"
+    Image <$> (fromURI <$> (o .:? "url"))
+          <*> (fromURI <$> (o .:? "mp4"))
+          <*> (fromInt <$> (o .:? "width"))
+          <*> (fromInt <$> (o .:? "height"))
+
+newtype ImageMap = ImageMap (Map.Map T.Text Image)
+  deriving (Show, Eq, Ord, Generic)
+
+instance Aeson.FromJSON ImageMap
 
 -- | A search response item.
 data Gif = Gif {
-    gifId     :: T.Text
-  , gifSlug   :: T.Text
-  , gifUrl    :: URI.URI
-  , gifImages :: ImageMap
+    _gifId     :: T.Text
+  , _gifSlug   :: T.Text
+  , _gifUrl    :: URI.URI
+  , _gifImages :: ImageMap
 } deriving (Show, Eq, Ord, Generic)
+
+Lens.makeLenses ''Gif
 
 instance Aeson.FromJSON Gif where
   parseJSON (Aeson.Object o) =
@@ -69,24 +96,15 @@ instance Aeson.FromJSON Gif where
         <*> fromURI (o .: "url")
         <*> o .: "images"
 
-newtype ImageMap = ImageMap (Map.Map T.Text Image)
-  deriving (Show, Eq, Ord, Generic)
-
-instance Aeson.FromJSON ImageMap
-
-data Image = Image {
-    imageUrl :: Maybe URI.URI
-  , mp4Url   :: Maybe URI.URI
-  , width    :: Maybe Int
-  , height   :: Maybe Int
+newtype SearchResponse = SearchResponse {
+  _searchItems :: [Gif]
 } deriving (Show, Eq, Ord, Generic)
 
-instance Aeson.FromJSON Image where
+Lens.makeLenses ''SearchResponse
+
+instance Aeson.FromJSON SearchResponse where
   parseJSON (Aeson.Object o) =
-    Image <$> (fromURI <$> (o .:? "url"))
-          <*> (fromURI <$> (o .:? "mp4"))
-          <*> (fromInt <$> (o .:? "width"))
-          <*> (fromInt <$> (o .:? "height"))
+    SearchResponse <$> o .: "data"
 
 -- | The Giphy API
 type GiphyAPI = "v1"
