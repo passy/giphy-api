@@ -15,6 +15,7 @@ import           Data.Monoid            ((<>))
 import           Control.Lens.Operators
 import           Control.Lens.Prism     (_Right)
 import           Control.Lens.Cons      (_head)
+import           Control.Lens.At        (at)
 
 data Options = Options
   { query :: T.Text
@@ -51,5 +52,9 @@ main = Opt.execParser (cliParser version) >>= run
       let fstUrl = resp ^? _Right
                         .  Giphy.searchItems
                         .  _head
-                        .  Giphy.gifUrl
+                        .  Giphy.gifImages
+                        .  Giphy.imageMap
+                        .  at "original"
+                        .  traverse
+                        .  Giphy.imageUrl
       print fstUrl

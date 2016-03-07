@@ -21,6 +21,7 @@ module Web.Giphy
   , imageMp4Url
   , imageWidth
   , imageHeight
+  , imageMap
   , searchItems
   -- Actions
   , search
@@ -74,10 +75,12 @@ instance Aeson.FromJSON Image where
           <*> (fromInt <$> (o .:? "width"))
           <*> (fromInt <$> (o .:? "height"))
 
-newtype ImageMap = ImageMap (Map.Map T.Text Image)
+newtype ImageMap = ImageMap { _imageMap :: Map.Map T.Text Image }
   deriving (Show, Eq, Ord, Generic)
 
 instance Aeson.FromJSON ImageMap
+
+Lens.makeLenses ''ImageMap
 
 -- | A search response item.
 data Gif = Gif {
