@@ -50,10 +50,11 @@ main = Opt.execParser (cliParser version) >>= run
       let q = Giphy.Query $ query opts
       resp <- Giphy.search apiKey q
       let fstUrl = resp ^? _Right
-                        .  Giphy.searchItems
-                        .  _head
-                        .  Giphy.gifImages
-                        .  at "original"
-                        .  traverse
-                        .  Giphy.imageUrl
+                         . Giphy.searchItems
+                         . _head
+                         . Giphy.gifImages
+                         . at "original"
+                         . traverse
+                         . Giphy.imageUrl
+                         . traverse
       print fstUrl
