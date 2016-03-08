@@ -1,4 +1,5 @@
 # WIP: givegif
+[![Build Status](https://travis-ci.org/passy/givegif.svg?branch=master)](https://travis-ci.org/passy/givegif)
 
 ## API Examples
 
