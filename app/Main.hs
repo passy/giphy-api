@@ -53,7 +53,6 @@ main = Opt.execParser (cliParser version) >>= run
                         .  Giphy.searchItems
                         .  _head
                         .  Giphy.gifImages
-                        .  Giphy.imageMap
                         .  at "original"
                         .  traverse
                         .  Giphy.imageUrl

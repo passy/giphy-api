@@ -13,6 +13,8 @@ import qualified Data.Text              as T
 import qualified Data.Text.Encoding     as TE
 import qualified Data.Text.IO           as TIO
 import           Network.URI            (parseURI)
+import           Control.Lens.Prism     (_Right)
+import           Control.Lens.Cons      (_head)
 
 import           Control.Lens.Operators
 import           Control.Lens.Wrapped
@@ -33,29 +35,29 @@ main = hspec $ do
       it "parses a search response" $ do
         resp <- readFixture "search_response.json"
         let item = case Aeson.eitherDecode resp of
-                      Left e -> error e
-                      Right search -> head $ Giphy._searchItems search
+                    Left err -> error err
+                    Right i -> i ^?! Giphy.searchItems . _head
 
         item ^. Giphy.gifId `shouldBe` "QgcQLZa6glP2w"
         item ^. Giphy.gifSlug `shouldBe` "cat-funny-QgcQLZa6glP2w"
         item ^. Giphy.gifUrl `shouldBe` fromJust (parseURI "https://giphy.com/gifs/cat-funny-QgcQLZa6glP2w")
 
-        let (Giphy.ImageMap m) = item ^. Giphy.gifImages
-        Map.keys m `shouldBe` [ "downsized"
-                              , "downsized_large"
-                              , "downsized_medium"
-                              , "downsized_still"
-                              , "fixed_height"
-                              , "fixed_height_downsampled"
-                              , "fixed_height_small"
-                              , "fixed_height_small_still"
-                              , "fixed_height_still"
-                              , "fixed_width"
-                              , "fixed_width_downsampled"
-                              , "fixed_width_small"
-                              , "fixed_width_small_still"
-                              , "fixed_width_still"
-                              , "looping"
-                              , "original"
-                              , "original_still"
-                              ]
+        Map.keys (item ^. Giphy.gifImages) `shouldBe` [
+            "downsized"
+          , "downsized_large"
+          , "downsized_medium"
+          , "downsized_still"
+          , "fixed_height"
+          , "fixed_height_downsampled"
+          , "fixed_height_small"
+          , "fixed_height_small_still"
+          , "fixed_height_still"
+          , "fixed_width"
+          , "fixed_width_downsampled"
+          , "fixed_width_small"
+          , "fixed_width_small_still"
+          , "fixed_width_still"
+          , "looping"
+          , "original"
+          , "original_still"
+          ]
