@@ -15,6 +15,7 @@ import qualified Data.Text.IO           as TIO
 import           Network.URI            (parseURI)
 import           Control.Lens.Prism     (_Right)
 import           Control.Lens.Cons      (_head)
+import           Control.Lens.At        (at)
 
 import           Control.Lens.Operators
 import           Control.Lens.Wrapped
@@ -42,7 +43,9 @@ main = hspec $ do
         item ^. Giphy.gifSlug `shouldBe` "cat-funny-QgcQLZa6glP2w"
         item ^. Giphy.gifUrl `shouldBe` fromJust (parseURI "https://giphy.com/gifs/cat-funny-QgcQLZa6glP2w")
 
-        Map.keys (item ^. Giphy.gifImages) `shouldBe` [
+        let images = item ^. Giphy.gifImages
+
+        Map.keys images `shouldBe` [
             "downsized"
           , "downsized_large"
           , "downsized_medium"
@@ -61,3 +64,6 @@ main = hspec $ do
           , "original"
           , "original_still"
           ]
+
+        images ^? at "fixed_height" . traverse . Giphy.imageUrl . traverse `shouldBe`
+          parseURI "https://media0.giphy.com/media/QgcQLZa6glP2w/200.gif"
