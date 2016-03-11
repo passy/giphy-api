@@ -16,6 +16,7 @@ import           Control.Lens.Operators
 import           Control.Lens.Prism     (_Right)
 import           Control.Lens.Cons      (_head)
 import           Control.Lens.At        (at)
+import Control.Monad (join)
 
 data Options = Options
   { query :: T.Text
@@ -49,7 +50,7 @@ main = Opt.execParser (cliParser version) >>= run
     run opts = do
       let config = Giphy.GiphyConfig apiKey
       let q = Giphy.Query $ query opts
-      resp <- Giphy.runGiphyT (Giphy.search q) config
+      resp <- join $ Giphy.runGiphyT (Giphy.search q) config
       let fstUrl = resp ^? _Right
                          . Giphy.searchItems
                          . _head
