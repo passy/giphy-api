@@ -50,7 +50,7 @@ main = Opt.execParser (cliParser version) >>= run
     run opts = do
       let config = Giphy.GiphyConfig apiKey
       let q = Giphy.Query $ query opts
-      resp <- join $ Giphy.runGiphyT (Giphy.search q) config
+      resp <- Giphy.runGiphyT (Giphy.search q) config
       let fstUrl = resp ^? _Right
                          . Giphy.searchItems
                          . _head

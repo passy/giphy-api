@@ -27,11 +27,13 @@ module Web.Giphy
   , searchItems
   -- Actions
   , search
+  , search'
   -- Monad runners
   , runGiphyT
   ) where
 
 import           Control.Monad              (MonadPlus (), mzero)
+import           Control.Monad.Trans (MonadIO, lift)
 import qualified Control.Monad.Reader       as Reader
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
 import           Data.Aeson                 ((.:), (.:?))
@@ -63,7 +65,7 @@ newtype Key = Key T.Text
 data GiphyConfig = GiphyConfig { configApiKey :: Key }
   deriving (Show, Eq)
 
-type GiphyT = Reader.ReaderT GiphyConfig
+type GiphyT = Reader.ReaderT GiphyConfig (EitherT Servant.ServantError IO)
 
 -- | A search query.
 newtype Query = Query T.Text
@@ -133,12 +135,12 @@ search' = Servant.client api host
   where host = Servant.BaseUrl Servant.Https "api.giphy.com" 443
 
 -- | Issue a search request for the given query.
-search :: Reader.MonadReader GiphyConfig m
-  => Query
-  -> m (IO (Either Servant.ServantError SearchResponse))
+search
+  :: Query
+  -> GiphyT SearchResponse
 search query = do
   key <- Reader.asks configApiKey
-  return . runEitherT $ search' (pure key) (pure query)
+  lift $ search' (pure key) (pure query)
 
-runGiphyT :: GiphyT m a -> GiphyConfig -> m a
-runGiphyT = Reader.runReaderT
+runGiphyT :: GiphyT a -> GiphyConfig -> IO (Either Servant.ServantError a)
+runGiphyT = (runEitherT .) . Reader.runReaderT
