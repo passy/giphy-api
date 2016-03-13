@@ -6,19 +6,32 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeOperators              #-}
 
+-- |
+-- Provides a Giphy monad that can be used to issue selected API calls under a
+-- selected API key.
+
 module Web.Giphy
-  ( Key(..)
+  (
+  -- * Request Data Types
+  -- $request
+    Key(..)
   , Query(..)
   , Phrase(..)
+  -- * Response Data Types
+  -- $response
   , ImageMap()
   , Gif(..)
   , Image(..)
   , SearchResponse(..)
   , TranslateResponse(..)
   , SingleGifResponse(..)
+  -- * Giphy Monad
+  -- $giphy
   , GiphyConfig(..)
   , Giphy()
-  -- Lenses
+  , runGiphy
+  -- * Lenses
+  -- $lenses
   , gifId
   , gifSlug
   , gifUrl
@@ -30,12 +43,11 @@ module Web.Giphy
   , imageHeight
   , searchItems
   , translateItems
-  -- Actions
+  -- * API calls
+  -- $api
   , search
   , translate
   , gif
-  -- Monad runners
-  , runGiphy
   ) where
 
 import           Control.Monad              (MonadPlus (), mzero)
