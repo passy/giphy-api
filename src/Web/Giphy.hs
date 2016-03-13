@@ -76,16 +76,14 @@ fromURI = maybeParse URI.parseURI
 fromInt :: (Monad m, MonadPlus m) => m String -> m Int
 fromInt = maybeParse Read.readMaybe
 
+-- $request
+--
+-- These data types are used to encapsulate otherwise weakly
+-- typed arguments.
+
 -- | The API Key. See https://github.com/Giphy/GiphyAPI
 newtype Key = Key T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
-
--- | Contains the key to access the API.
-data GiphyConfig = GiphyConfig { configApiKey :: Key }
-  deriving (Show, Eq)
-
--- | The Giphy monad contains the execution context.
-type Giphy = Reader.ReaderT GiphyConfig (EitherT Servant.ServantError IO)
 
 -- | A search query.
 newtype Query = Query T.Text
@@ -98,6 +96,11 @@ newtype Phrase = Phrase T.Text
 -- | A unique gif identifier.
 newtype GifId = GifId T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
+
+-- $response
+--
+-- These data types contain are the parsed JSON responses from
+-- the Giphy API.
 
 -- | An image contained in a Giphy response.
 data Image = Image {
@@ -117,6 +120,7 @@ instance Aeson.FromJSON Image where
           <*> (fromInt <$> (o .:? "height"))
   parseJSON _ = error "Invalid image response."
 
+-- | Mapping from a text identifier to an image.
 type ImageMap = Map.Map T.Text Image
 
 -- | A search response item.
@@ -137,6 +141,7 @@ instance Aeson.FromJSON Gif where
         <*> o .: "images"
   parseJSON _ = error "Invalid GIF response."
 
+-- | A collection of GIFs as part of a search response.
 newtype SearchResponse = SearchResponse {
   _searchItems :: [Gif]
 } deriving (Show, Eq, Ord, Generic)
@@ -148,6 +153,7 @@ instance Aeson.FromJSON SearchResponse where
     SearchResponse <$> o .: "data"
   parseJSON _ = error "Invalid search response."
 
+-- | A collection of GIFs as part of a translate response.
 newtype TranslateResponse = TranslateResponse {
   _translateItems :: [Gif]
 } deriving (Show, Eq, Ord, Generic)
@@ -159,6 +165,7 @@ instance Aeson.FromJSON TranslateResponse where
     TranslateResponse <$> o .: "data"
   parseJSON _ = error "Invalid translate response."
 
+-- | A single gif as part of a response.
 newtype SingleGifResponse = SingleGifResponse {
   _singleGifItem :: Gif
 } deriving (Show, Eq, Ord, Generic)
@@ -210,6 +217,12 @@ gif'
 search' :<|> translate' :<|> gif' = Servant.client api host
   where host = Servant.BaseUrl Servant.Https "api.giphy.com" 443
 
+-- $api
+--
+-- Functions that directly access the Giphy API. All these functions run in
+-- the 'Giphy' monad.
+--
+
 -- | Issue a search request for the given query.
 --   E.g. <http://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC>
 search
@@ -237,7 +250,24 @@ translate phrase = do
   key <- Reader.asks configApiKey
   lift $ translate' (pure key) (pure phrase)
 
+-- $giphy
+--
+-- Use 'runGiphy' to lift the 'Giphy' monad into IO.
+--
+
+-- | Contains the key to access the API.
+data GiphyConfig = GiphyConfig { configApiKey :: Key }
+  deriving (Show, Eq)
+
+-- | The Giphy monad contains the execution context.
+type Giphy = Reader.ReaderT GiphyConfig (EitherT Servant.ServantError IO)
+
 -- | You need to provide a 'GiphyConfig' to lift a 'Giphy' computation
 -- into the 'IO' monad.
 runGiphy :: Giphy a -> GiphyConfig -> IO (Either Servant.ServantError a)
 runGiphy = (runEitherT .) . Reader.runReaderT
+
+-- $lenses
+--
+-- You can use these lenses if you prefer them to manually accessing
+-- record fields.
