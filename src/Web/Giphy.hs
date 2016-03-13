@@ -9,10 +9,12 @@
 module Web.Giphy
   ( Key(..)
   , Query(..)
+  , Phrase(..)
   , ImageMap()
   , Gif(..)
   , Image(..)
   , SearchResponse(..)
+  , TranslateResponse(..)
   , SingleGifResponse(..)
   , GiphyConfig(..)
   , Giphy()
@@ -27,8 +29,10 @@ module Web.Giphy
   , imageWidth
   , imageHeight
   , searchItems
+  , translateItems
   -- Actions
   , search
+  , translate
   , gif
   -- Monad runners
   , runGiphy
@@ -73,6 +77,10 @@ type Giphy = Reader.ReaderT GiphyConfig (EitherT Servant.ServantError IO)
 
 -- | A search query.
 newtype Query = Query T.Text
+  deriving (Servant.ToText, Servant.FromText, Show, Eq)
+
+-- | A phrase or term used for translation.
+newtype Phrase = Phrase T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
 
 -- | A unique gif identifier.
@@ -128,6 +136,17 @@ instance Aeson.FromJSON SearchResponse where
     SearchResponse <$> o .: "data"
   parseJSON _ = error "Invalid search response."
 
+newtype TranslateResponse = TranslateResponse {
+  _translateItems :: [Gif]
+} deriving (Show, Eq, Ord, Generic)
+
+Lens.makeLenses ''TranslateResponse
+
+instance Aeson.FromJSON TranslateResponse where
+  parseJSON (Aeson.Object o) =
+    TranslateResponse <$> o .: "data"
+  parseJSON _ = error "Invalid translate response."
+
 newtype SingleGifResponse = SingleGifResponse {
   _singleGifItem :: Gif
 } deriving (Show, Eq, Ord, Generic)
@@ -148,6 +167,12 @@ type GiphyAPI = "v1"
     :> Servant.Get '[Servant.JSON] SearchResponse
   :<|> "v1"
     :> "gifs"
+    :> "translate"
+    :> Servant.QueryParam "api_key" Key
+    :> Servant.QueryParam "s" Phrase
+    :> Servant.Get '[Servant.JSON] TranslateResponse
+  :<|> "v1"
+    :> "gifs"
     :> Servant.Capture "gif_id" GifId
     :> Servant.QueryParam "api_key" Key
     :> Servant.Get '[Servant.JSON] SingleGifResponse
@@ -160,12 +185,17 @@ search'
   -> Maybe Query
   -> EitherT Servant.ServantError IO SearchResponse
 
+translate'
+  :: Maybe Key
+  -> Maybe Phrase
+  -> EitherT Servant.ServantError IO TranslateResponse
+
 gif'
   :: GifId
   -> Maybe Key
   -> EitherT Servant.ServantError IO SingleGifResponse
 
-search' :<|> gif' = Servant.client api host
+search' :<|> translate' :<|> gif' = Servant.client api host
   where host = Servant.BaseUrl Servant.Https "api.giphy.com" 443
 
 -- | Issue a search request for the given query.
@@ -185,6 +215,15 @@ gif
 gif gifid = do
   key <- Reader.asks configApiKey
   lift $ gif' gifid (pure key)
+
+-- | Issue a translate request for a given phrase or term.
+--   E.g. <http://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
+translate
+  :: Phrase
+  -> Giphy TranslateResponse
+translate phrase = do
+  key <- Reader.asks configApiKey
+  lift $ translate' (pure key) (pure phrase)
 
 -- | You need to provide a 'GiphyConfig' to lift a 'Giphy' computation
 -- into the 'IO' monad.
