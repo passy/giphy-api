@@ -137,7 +137,7 @@ instance Aeson.FromJSON Image where
           <*> (fromInt <$> (o .:? "height"))
   parseJSON _ = error "Invalid image response."
 
--- | Mapping from a text identifier to an image.
+-- | Mapping from a 'T.Text' identifier to an 'Image'.
 type ImageMap = Map.Map T.Text Image
 
 -- | A search response item.
@@ -241,7 +241,7 @@ search' :<|> translate' :<|> gif' = Servant.client api host
 --
 
 -- | Issue a search request for the given query.
---   E.g. <http://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC>
+-- E.g. <http://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC>
 search
   :: Query
   -> Giphy SearchResponse
@@ -250,7 +250,7 @@ search query = do
   lift $ search' (pure key) (pure query)
 
 -- | Issue a request for a single GIF identified by its 'GifId'.
---   E.g. <http://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
+-- E.g. <http://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
 gif
   :: GifId
   -> Giphy SingleGifResponse
@@ -259,7 +259,7 @@ gif gifid = do
   lift $ gif' gifid (pure key)
 
 -- | Issue a translate request for a given phrase or term.
---   E.g. <http://api.giphy.com/v1/gifs/translate?s=superman&api_key=dc6zaTOxFJmzC>
+-- E.g. <http://api.giphy.com/v1/gifs/translate?s=superman&api_key=dc6zaTOxFJmzC>
 translate
   :: Phrase
   -> Giphy TranslateResponse
