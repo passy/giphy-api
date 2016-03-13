@@ -14,7 +14,7 @@ module Web.Giphy
   , Image(..)
   , SearchResponse(..)
   , GiphyConfig(..)
-  , GiphyT()
+  , Giphy()
   -- Lenses
   , gifId
   , gifSlug
@@ -29,7 +29,7 @@ module Web.Giphy
   , search
   , search'
   -- Monad runners
-  , runGiphyT
+  , runGiphy
   ) where
 
 import           Control.Monad              (MonadPlus (), mzero)
@@ -62,15 +62,18 @@ fromInt = maybeParse Read.readMaybe
 newtype Key = Key T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
 
+-- | Contains the key to access the API.
 data GiphyConfig = GiphyConfig { configApiKey :: Key }
   deriving (Show, Eq)
 
-type GiphyT = Reader.ReaderT GiphyConfig (EitherT Servant.ServantError IO)
+-- | The Giphy monad contains the execution context.
+type Giphy = Reader.ReaderT GiphyConfig (EitherT Servant.ServantError IO)
 
 -- | A search query.
 newtype Query = Query T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
 
+-- | An image contained in a Giphy response.
 data Image = Image {
     _imageUrl    :: Maybe URI.URI
   , _imageMp4Url :: Maybe URI.URI
@@ -137,10 +140,12 @@ search' = Servant.client api host
 -- | Issue a search request for the given query.
 search
   :: Query
-  -> GiphyT SearchResponse
+  -> Giphy SearchResponse
 search query = do
   key <- Reader.asks configApiKey
   lift $ search' (pure key) (pure query)
 
-runGiphyT :: GiphyT a -> GiphyConfig -> IO (Either Servant.ServantError a)
-runGiphyT = (runEitherT .) . Reader.runReaderT
+-- | You need to provide a 'GiphyConfig' to lift a 'Giphy' computation
+-- into the 'IO' monad.
+runGiphy :: Giphy a -> GiphyConfig -> IO (Either Servant.ServantError a)
+runGiphy = (runEitherT .) . Reader.runReaderT
