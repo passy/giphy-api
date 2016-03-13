@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TemplateHaskell            #-}
@@ -12,6 +13,8 @@ module Web.Giphy
   , Gif(..)
   , Image(..)
   , SearchResponse(..)
+  , GiphyConfig(..)
+  , GiphyT()
   -- Lenses
   , gifId
   , gifSlug
@@ -24,9 +27,14 @@ module Web.Giphy
   , searchItems
   -- Actions
   , search
+  , search'
+  -- Monad runners
+  , runGiphyT
   ) where
 
 import           Control.Monad              (MonadPlus (), mzero)
+import           Control.Monad.Trans (MonadIO, lift)
+import qualified Control.Monad.Reader       as Reader
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
 import           Data.Aeson                 ((.:), (.:?))
 import qualified Data.Aeson.Types           as Aeson
@@ -53,6 +61,11 @@ fromInt = maybeParse Read.readMaybe
 -- | The API Key. See https://github.com/Giphy/GiphyAPI
 newtype Key = Key T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
+
+data GiphyConfig = GiphyConfig { configApiKey :: Key }
+  deriving (Show, Eq)
+
+type GiphyT = Reader.ReaderT GiphyConfig (EitherT Servant.ServantError IO)
 
 -- | A search query.
 newtype Query = Query T.Text
@@ -123,7 +136,11 @@ search' = Servant.client api host
 
 -- | Issue a search request for the given query.
 search
-  :: Key
-  -> Query
-  -> IO (Either Servant.ServantError SearchResponse)
-search key query = runEitherT $ search' (pure key) (pure query)
+  :: Query
+  -> GiphyT SearchResponse
+search query = do
+  key <- Reader.asks configApiKey
+  lift $ search' (pure key) (pure query)
+
+runGiphyT :: GiphyT a -> GiphyConfig -> IO (Either Servant.ServantError a)
+runGiphyT = (runEitherT .) . Reader.runReaderT
