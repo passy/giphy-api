@@ -28,6 +28,13 @@ library
                      , microlens-th
                      , mtl
   default-language:    Haskell2010
+  Ghc-options:         -Wall
+                       -fwarn-tabs
+                       -fwarn-incomplete-record-updates
+                       -fwarn-monomorphism-restriction
+                       -fwarn-unused-do-bind
+                       -- -fwarn-missing-import-lists
+
 
 executable givegif-exe
   hs-source-dirs:      app
