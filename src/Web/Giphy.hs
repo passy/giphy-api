@@ -13,6 +13,7 @@ module Web.Giphy
   , Gif(..)
   , Image(..)
   , SearchResponse(..)
+  , GifResponse(..)
   , GiphyConfig(..)
   , Giphy()
   -- Lenses
@@ -20,6 +21,7 @@ module Web.Giphy
   , gifSlug
   , gifUrl
   , gifImages
+  , gifItem
   , imageUrl
   , imageMp4Url
   , imageWidth
@@ -27,14 +29,14 @@ module Web.Giphy
   , searchItems
   -- Actions
   , search
-  , search'
+  , gif
   -- Monad runners
   , runGiphy
   ) where
 
 import           Control.Monad              (MonadPlus (), mzero)
-import           Control.Monad.Trans (MonadIO, lift)
 import qualified Control.Monad.Reader       as Reader
+import           Control.Monad.Trans        (lift)
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
 import           Data.Aeson                 ((.:), (.:?))
 import qualified Data.Aeson.Types           as Aeson
@@ -44,7 +46,7 @@ import qualified Data.Text                  as T
 import           GHC.Generics               (Generic ())
 import qualified Lens.Micro.TH              as Lens
 import qualified Network.URI                as URI
-import           Servant.API                ((:>))
+import           Servant.API                ((:<|>) (..), (:>))
 import qualified Servant.API                as Servant
 import qualified Servant.Client             as Servant
 import qualified Text.Read                  as Read
@@ -73,6 +75,10 @@ type Giphy = Reader.ReaderT GiphyConfig (EitherT Servant.ServantError IO)
 newtype Query = Query T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
 
+-- | A unique gif identifier.
+newtype GifId = GifId T.Text
+  deriving (Servant.ToText, Servant.FromText, Show, Eq)
+
 -- | An image contained in a Giphy response.
 data Image = Image {
     _imageUrl    :: Maybe URI.URI
@@ -89,6 +95,7 @@ instance Aeson.FromJSON Image where
           <*> (fromURI <$> (o .:? "mp4"))
           <*> (fromInt <$> (o .:? "width"))
           <*> (fromInt <$> (o .:? "height"))
+  parseJSON _ = error "Invalid image response."
 
 type ImageMap = Map.Map T.Text Image
 
@@ -108,6 +115,7 @@ instance Aeson.FromJSON Gif where
         <*> o .: "slug"
         <*> fromURI (o .: "url")
         <*> o .: "images"
+  parseJSON _ = error "Invalid GIF response."
 
 newtype SearchResponse = SearchResponse {
   _searchItems :: [Gif]
@@ -118,14 +126,31 @@ Lens.makeLenses ''SearchResponse
 instance Aeson.FromJSON SearchResponse where
   parseJSON (Aeson.Object o) =
     SearchResponse <$> o .: "data"
+  parseJSON _ = error "Invalid search response."
+
+newtype GifResponse = GifResponse {
+  _gifItem :: Gif
+} deriving (Show, Eq, Ord, Generic)
+
+Lens.makeLenses ''GifResponse
+
+instance Aeson.FromJSON GifResponse where
+  parseJSON (Aeson.Object o) =
+    GifResponse <$> o .: "data"
+  parseJSON _ = error "Invalid GIF response."
 
 -- | The Giphy API
 type GiphyAPI = "v1"
-  :> "gifs"
-  :> "search"
-  :> Servant.QueryParam "api_key" Key
-  :> Servant.QueryParam "q" Query
-  :> Servant.Get '[Servant.JSON] SearchResponse
+    :> "gifs"
+    :> "search"
+    :> Servant.QueryParam "api_key" Key
+    :> Servant.QueryParam "q" Query
+    :> Servant.Get '[Servant.JSON] SearchResponse
+  :<|> "v1"
+    :> "gifs"
+    :> Servant.Capture "gif_id" GifId
+    :> Servant.QueryParam "api_key" Key
+    :> Servant.Get '[Servant.JSON] GifResponse
 
 api :: Proxy.Proxy GiphyAPI
 api = Proxy.Proxy
@@ -134,16 +159,32 @@ search'
   :: Maybe Key
   -> Maybe Query
   -> EitherT Servant.ServantError IO SearchResponse
-search' = Servant.client api host
+
+gif'
+  :: GifId
+  -> Maybe Key
+  -> EitherT Servant.ServantError IO GifResponse
+
+search' :<|> gif' = Servant.client api host
   where host = Servant.BaseUrl Servant.Https "api.giphy.com" 443
 
 -- | Issue a search request for the given query.
+--   E.g. <http://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC>
 search
   :: Query
   -> Giphy SearchResponse
 search query = do
   key <- Reader.asks configApiKey
   lift $ search' (pure key) (pure query)
+
+-- | Issue a request for a single GIF identified by its 'GifId'.
+--   E.g. <http://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
+gif
+  :: GifId
+  -> Giphy GifResponse
+gif gifid = do
+  key <- Reader.asks configApiKey
+  lift $ gif' gifid (pure key)
 
 -- | You need to provide a 'GiphyConfig' to lift a 'Giphy' computation
 -- into the 'IO' monad.
