@@ -9,6 +9,23 @@
 -- |
 -- Provides a Giphy monad that can be used to issue selected API calls under a
 -- selected API key.
+--
+-- @
+-- import qualified Web.Giphy as Giphy
+--
+-- let apiKey = Giphy.'Key' "dc6zaTOxFJmzC"
+-- let config = Giphy.'GiphyConfig' apiKey
+-- resp <- Giphy.'runGiphy' (Giphy.'search' $ Giphy.'query' "puppies") config
+-- let fstUrl = resp ^? _Right
+--                    . Giphy.'searchItems'
+--                    . _head
+--                    . Giphy.'gifImages'
+--                    . at "original"
+--                    . traverse
+--                    . Giphy.'imageUrl'
+--                    . traverse
+-- print fstUrl
+-- @
 
 module Web.Giphy
   (
@@ -242,7 +259,7 @@ gif gifid = do
   lift $ gif' gifid (pure key)
 
 -- | Issue a translate request for a given phrase or term.
---   E.g. <http://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
+--   E.g. <http://api.giphy.com/v1/gifs/translate?s=superman&api_key=dc6zaTOxFJmzC>
 translate
   :: Phrase
   -> Giphy TranslateResponse
