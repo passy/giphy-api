@@ -13,7 +13,7 @@ module Web.Giphy
   , Gif(..)
   , Image(..)
   , SearchResponse(..)
-  , GifResponse(..)
+  , SingleGifResponse(..)
   , GiphyConfig(..)
   , Giphy()
   -- Lenses
@@ -21,7 +21,7 @@ module Web.Giphy
   , gifSlug
   , gifUrl
   , gifImages
-  , gifItem
+  , singleGifItem
   , imageUrl
   , imageMp4Url
   , imageWidth
@@ -128,15 +128,15 @@ instance Aeson.FromJSON SearchResponse where
     SearchResponse <$> o .: "data"
   parseJSON _ = error "Invalid search response."
 
-newtype GifResponse = GifResponse {
-  _gifItem :: Gif
+newtype SingleGifResponse = SingleGifResponse {
+  _singleGifItem :: Gif
 } deriving (Show, Eq, Ord, Generic)
 
-Lens.makeLenses ''GifResponse
+Lens.makeLenses ''SingleGifResponse
 
-instance Aeson.FromJSON GifResponse where
+instance Aeson.FromJSON SingleGifResponse where
   parseJSON (Aeson.Object o) =
-    GifResponse <$> o .: "data"
+    SingleGifResponse <$> o .: "data"
   parseJSON _ = error "Invalid GIF response."
 
 -- | The Giphy API
@@ -150,7 +150,7 @@ type GiphyAPI = "v1"
     :> "gifs"
     :> Servant.Capture "gif_id" GifId
     :> Servant.QueryParam "api_key" Key
-    :> Servant.Get '[Servant.JSON] GifResponse
+    :> Servant.Get '[Servant.JSON] SingleGifResponse
 
 api :: Proxy.Proxy GiphyAPI
 api = Proxy.Proxy
@@ -163,7 +163,7 @@ search'
 gif'
   :: GifId
   -> Maybe Key
-  -> EitherT Servant.ServantError IO GifResponse
+  -> EitherT Servant.ServantError IO SingleGifResponse
 
 search' :<|> gif' = Servant.client api host
   where host = Servant.BaseUrl Servant.Https "api.giphy.com" 443
@@ -181,7 +181,7 @@ search query = do
 --   E.g. <http://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
 gif
   :: GifId
-  -> Giphy GifResponse
+  -> Giphy SingleGifResponse
 gif gifid = do
   key <- Reader.asks configApiKey
   lift $ gif' gifid (pure key)
