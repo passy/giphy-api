@@ -27,6 +27,8 @@ library
                      , microlens
                      , microlens-th
                      , mtl
+                     , rainbow
+                     , bytestring
   default-language:    Haskell2010
   Ghc-options:         -Wall
                        -fwarn-tabs
