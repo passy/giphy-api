@@ -69,7 +69,7 @@ module Web.Giphy
 
 import           Control.Monad              (MonadPlus (), mzero)
 import qualified Control.Monad.Reader       as Reader
-import           Control.Monad.Trans        (lift)
+import           Control.Monad.Trans        (MonadIO(), lift, liftIO)
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
 import           Data.Aeson                 ((.:), (.:?))
 import qualified Data.Aeson.Types           as Aeson
@@ -280,9 +280,9 @@ data GiphyConfig = GiphyConfig { configApiKey :: Key }
 type Giphy = Reader.ReaderT GiphyConfig (EitherT Servant.ServantError IO)
 
 -- | You need to provide a 'GiphyConfig' to lift a 'Giphy' computation
--- into the 'IO' monad.
-runGiphy :: Giphy a -> GiphyConfig -> IO (Either Servant.ServantError a)
-runGiphy = (runEitherT .) . Reader.runReaderT
+-- into 'MonadIO'.
+runGiphy :: MonadIO m => Giphy a -> GiphyConfig -> m (Either Servant.ServantError a)
+runGiphy = ((liftIO . runEitherT) .) . Reader.runReaderT
 
 -- $lenses
 --
