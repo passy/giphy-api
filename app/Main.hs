@@ -5,7 +5,6 @@ module Main where
 import qualified Data.Text              as T
 import qualified Options.Applicative    as Opt
 import qualified Web.Giphy              as Giphy
-import qualified Network.URI            as URI
 
 import           Control.Applicative    ((<**>))
 import           Data.Version           (Version (), showVersion)
@@ -13,14 +12,13 @@ import           Paths_givegif          (version)
 
 import           Data.Monoid            ((<>))
 
+import           Control.Lens.At        (at)
+import           Control.Lens.Cons      (_head)
 import           Control.Lens.Operators
 import           Control.Lens.Prism     (_Right)
-import           Control.Lens.Cons      (_head)
-import           Control.Lens.At        (at)
-import Control.Monad (join)
 
 data Options = Options
-  { query :: T.Text
+  { query        :: T.Text
   , useTranslate :: Bool
   }
 

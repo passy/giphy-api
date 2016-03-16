@@ -9,21 +9,18 @@ import           System.Directory       (getCurrentDirectory)
 import qualified Data.Aeson             as Aeson
 import qualified Data.ByteString.Lazy   as BS
 import qualified Data.Map.Strict        as Map
-import qualified Data.Text              as T
 import qualified Data.Text.Encoding     as TE
 import qualified Data.Text.IO           as TIO
 import           Network.URI            (parseURI)
-import           Control.Lens.Prism     (_Right)
 import           Control.Lens.Cons      (_head)
 import           Control.Lens.At        (at)
 
 import           Control.Lens.Operators
-import           Control.Lens.Wrapped
 import           Test.Hspec
 
 import qualified Web.Giphy              as Giphy
 
-readFixture :: forall s b. FilePath -> IO BS.ByteString
+readFixture :: FilePath -> IO BS.ByteString
 readFixture path = do
     dir <- getCurrentDirectory
     BS.fromStrict . TE.encodeUtf8 <$> TIO.readFile (dir </> "test" </> "fixtures" </> path)
