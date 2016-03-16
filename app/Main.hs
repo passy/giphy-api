@@ -68,14 +68,10 @@ main = Opt.execParser (cliParser version) >>= run
 
 translateApp :: T.Text -> Giphy.Giphy [Giphy.Gif]
 translateApp q = do
-  let phrase = Giphy.Phrase q
-  resp <- Giphy.translate phrase
-
+  resp <- Giphy.translate $ Giphy.Phrase q
   return . pure $ resp ^. Giphy.translateItem
 
 searchApp :: T.Text -> Giphy.Giphy [Giphy.Gif]
 searchApp q = do
-  let query = Giphy.Query q
-  resp <- Giphy.search query
-
+  resp <- Giphy.search $ Giphy.Query q
   return $ resp ^. Giphy.searchItems
