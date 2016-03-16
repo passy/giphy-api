@@ -17,8 +17,3 @@ $ stack install
 λ: import Data.Text
 λ: search (Key "dc6zaTOxFJmzC") (Query "cute puppies")
 ```
-
-## TODO
-
-- Add support for pagination a la
-  [github-servant](https://github.com/finlay/servant-github).

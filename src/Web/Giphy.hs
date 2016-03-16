@@ -68,6 +68,7 @@ module Web.Giphy
   -- * API calls
   -- $api
   , search
+  , searchOffset
   , translate
   , gif
   ) where
@@ -117,6 +118,10 @@ newtype Phrase = Phrase T.Text
 
 -- | A unique gif identifier.
 newtype GifId = GifId T.Text
+  deriving (Servant.ToText, Servant.FromText, Show, Eq)
+
+-- | Offset for paginated requests.
+newtype PaginationOffset = PaginationOffset Int
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
 
 -- $response
@@ -222,6 +227,7 @@ type GiphyAPI = "v1"
     :> "gifs"
     :> "search"
     :> Servant.QueryParam "api_key" Key
+    :> Servant.QueryParam "offset" PaginationOffset
     :> Servant.QueryParam "q" Query
     :> Servant.Get '[Servant.JSON] SearchResponse
   :<|> "v1"
@@ -241,6 +247,7 @@ api = Proxy.Proxy
 
 search'
   :: Maybe Key
+  -> Maybe PaginationOffset
   -> Maybe Query
   -> EitherT Servant.ServantError IO SearchResponse
 
@@ -263,14 +270,25 @@ search' :<|> translate' :<|> gif' = Servant.client api host
 -- the 'Giphy' monad.
 --
 
--- | Issue a search request for the given query.
+-- | Issue a search request for the given query without specifying an offset.
 -- E.g. <http://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC>
 search
   :: Query
   -> Giphy SearchResponse
 search query = do
   key <- Reader.asks configApiKey
-  lift $ search' (pure key) (pure query)
+  lift $ search' (pure key) (pure $ PaginationOffset 0) (pure query)
+
+-- | Issue a search request for the given query by specifying a
+-- pagination offset.
+-- E.g. <http://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC&offset=25>
+searchOffset
+  :: Query
+  -> PaginationOffset
+  -> Giphy SearchResponse
+searchOffset query offset = do
+  key <- Reader.asks configApiKey
+  lift $ search' (pure key) (pure offset) (pure query)
 
 -- | Issue a request for a single GIF identified by its 'GifId'.
 -- E.g. <http://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
