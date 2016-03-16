@@ -32,13 +32,14 @@ main = hspec $ do
 
       it "parses a search response" $ do
         resp <- readFixture "search_response.json"
-        let item = case Aeson.eitherDecode resp of
-                    Left err -> error err
-                    Right i -> i ^?! Giphy.searchItems . _head
+        let res = either error id (Aeson.eitherDecode resp)
+        let item = res ^?! Giphy.searchItems . _head
 
         item ^. Giphy.gifId `shouldBe` "QgcQLZa6glP2w"
         item ^. Giphy.gifSlug `shouldBe` "cat-funny-QgcQLZa6glP2w"
         item ^. Giphy.gifUrl `shouldBe` fromJust (parseURI "https://giphy.com/gifs/cat-funny-QgcQLZa6glP2w")
+        res ^. Giphy.searchPagination . Giphy.paginationCount `shouldBe` 25
+        res ^. Giphy.searchPagination . Giphy.paginationTotalCount `shouldBe` 2161
 
         let images = item ^. Giphy.gifImages
 
