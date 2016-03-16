@@ -34,6 +34,7 @@ module Web.Giphy
     Key(..)
   , Query(..)
   , Phrase(..)
+  , Pagination(..)
   -- * Response Data Types
   -- $response
   , ImageMap()
@@ -50,15 +51,19 @@ module Web.Giphy
   -- * Lenses
   -- $lenses
   , gifId
+  , gifImages
   , gifSlug
   , gifUrl
-  , gifImages
-  , singleGifItem
-  , imageUrl
-  , imageMp4Url
-  , imageWidth
   , imageHeight
+  , imageMp4Url
+  , imageUrl
+  , imageWidth
+  , paginationCount
+  , paginationOffset
+  , paginationTotalCount
   , searchItems
+  , searchPagination
+  , singleGifItem
   , translateItem
   -- * API calls
   -- $api
@@ -69,7 +74,7 @@ module Web.Giphy
 
 import           Control.Monad              (MonadPlus (), mzero)
 import qualified Control.Monad.Reader       as Reader
-import           Control.Monad.Trans        (MonadIO(), lift, liftIO)
+import           Control.Monad.Trans        (MonadIO (), lift, liftIO)
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
 import           Data.Aeson                 ((.:), (.:?))
 import qualified Data.Aeson.Types           as Aeson
@@ -158,9 +163,26 @@ instance Aeson.FromJSON Gif where
         <*> o .: "images"
   parseJSON _ = error "Invalid GIF response."
 
+-- | Metadata about pagination in a response.
+data Pagination = Pagination {
+    _paginationTotalCount :: Int
+  , _paginationCount      :: Int
+  , _paginationOffset     :: Int
+} deriving (Show, Eq, Ord, Generic)
+
+Lens.makeLenses ''Pagination
+
+instance Aeson.FromJSON Pagination where
+  parseJSON (Aeson.Object o) =
+    Pagination <$> o .: "total_count"
+               <*> o .: "count"
+               <*> o .: "offset"
+  parseJSON _ = error "Invalid pagination data."
+
 -- | A collection of GIFs as part of a search response.
-newtype SearchResponse = SearchResponse {
-  _searchItems :: [Gif]
+data SearchResponse = SearchResponse {
+    _searchItems      :: [Gif]
+  , _searchPagination :: Pagination
 } deriving (Show, Eq, Ord, Generic)
 
 Lens.makeLenses ''SearchResponse
@@ -168,11 +190,12 @@ Lens.makeLenses ''SearchResponse
 instance Aeson.FromJSON SearchResponse where
   parseJSON (Aeson.Object o) =
     SearchResponse <$> o .: "data"
+                   <*> o .: "pagination"
   parseJSON _ = error "Invalid search response."
 
 -- | A single GIF as part of a translate response.
 newtype TranslateResponse = TranslateResponse {
-  _translateItem :: Gif
+    _translateItem :: Gif
 } deriving (Show, Eq, Ord, Generic)
 
 Lens.makeLenses ''TranslateResponse
