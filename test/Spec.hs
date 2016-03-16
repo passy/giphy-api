@@ -67,3 +67,38 @@ main = hspec $ do
 
         images ^? at "fixed_height" . traverse . Giphy.imageUrl . traverse `shouldBe`
           parseURI "https://media0.giphy.com/media/QgcQLZa6glP2w/200.gif"
+
+      it "parses a translate response" $ do
+        resp <- readFixture "translate_response.json"
+        let item = case Aeson.eitherDecode resp of
+                    Left err -> error err
+                    Right i -> i ^?! Giphy.translateItem
+
+        item ^. Giphy.gifId `shouldBe` "Zlkbqhurvg4Zq"
+        item ^. Giphy.gifSlug `shouldBe` "superman-Zlkbqhurvg4Zq"
+        item ^. Giphy.gifUrl `shouldBe` fromJust (parseURI "https://giphy.com/gifs/superman-Zlkbqhurvg4Zq")
+
+        let images = item ^. Giphy.gifImages
+
+        Map.keys images `shouldBe` [
+            "downsized"
+          , "downsized_large"
+          , "downsized_medium"
+          , "downsized_still"
+          , "fixed_height"
+          , "fixed_height_downsampled"
+          , "fixed_height_small"
+          , "fixed_height_small_still"
+          , "fixed_height_still"
+          , "fixed_width"
+          , "fixed_width_downsampled"
+          , "fixed_width_small"
+          , "fixed_width_small_still"
+          , "fixed_width_still"
+          , "looping"
+          , "original"
+          , "original_still"
+          ]
+
+        images ^? at "fixed_height" . traverse . Giphy.imageUrl . traverse `shouldBe`
+          parseURI "https://media0.giphy.com/media/Zlkbqhurvg4Zq/200.gif"

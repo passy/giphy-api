@@ -59,7 +59,7 @@ module Web.Giphy
   , imageWidth
   , imageHeight
   , searchItems
-  , translateItems
+  , translateItem
   -- * API calls
   -- $api
   , search
@@ -170,9 +170,9 @@ instance Aeson.FromJSON SearchResponse where
     SearchResponse <$> o .: "data"
   parseJSON _ = error "Invalid search response."
 
--- | A collection of GIFs as part of a translate response.
+-- | A single GIF as part of a translate response.
 newtype TranslateResponse = TranslateResponse {
-  _translateItems :: [Gif]
+  _translateItem :: Gif
 } deriving (Show, Eq, Ord, Generic)
 
 Lens.makeLenses ''TranslateResponse

@@ -71,7 +71,7 @@ translateApp q = do
   let phrase = Giphy.Phrase q
   resp <- Giphy.translate phrase
 
-  return $ resp ^. Giphy.translateItems
+  return . pure $ resp ^. Giphy.translateItem
 
 searchApp :: T.Text -> Giphy.Giphy [Giphy.Gif]
 searchApp q = do
