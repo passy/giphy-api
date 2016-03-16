@@ -37,12 +37,13 @@ module Web.Giphy
   , Pagination(..)
   -- * Response Data Types
   -- $response
-  , ImageMap()
   , Gif(..)
   , Image(..)
+  , ImageMap()
+  , PaginationOffset(..)
   , SearchResponse(..)
-  , TranslateResponse(..)
   , SingleGifResponse(..)
+  , TranslateResponse(..)
   -- * Giphy Monad
   -- $giphy
   , GiphyConfig(..)

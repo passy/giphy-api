@@ -27,8 +27,6 @@ library
                      , microlens
                      , microlens-th
                      , mtl
-                     , rainbow
-                     , bytestring
   default-language:    Haskell2010
   Ghc-options:         -Wall
                        -fwarn-tabs
@@ -48,6 +46,8 @@ executable givegif-exe
                      , text
                      , network-uri
                      , lens
+                     , rainbow
+                     , bytestring
   default-language:    Haskell2010
 
 test-suite givegif-test
