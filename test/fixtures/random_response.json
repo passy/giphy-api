@@ -1,0 +1,33 @@
+{
+    "data": {
+        "caption": "",
+        "fixed_height_downsampled_height": "200",
+        "fixed_height_downsampled_url": "http://media0.giphy.com/media/13bGOCL29Loy5O/200_d.gif",
+        "fixed_height_downsampled_width": "488",
+        "fixed_height_small_height": "100",
+        "fixed_height_small_still_url": "http://media0.giphy.com/media/13bGOCL29Loy5O/100_s.gif",
+        "fixed_height_small_url": "http://media0.giphy.com/media/13bGOCL29Loy5O/100.gif",
+        "fixed_height_small_width": "244",
+        "fixed_width_downsampled_height": "82",
+        "fixed_width_downsampled_url": "http://media0.giphy.com/media/13bGOCL29Loy5O/200w_d.gif",
+        "fixed_width_downsampled_width": "200",
+        "fixed_width_small_height": "41",
+        "fixed_width_small_still_url": "http://media0.giphy.com/media/13bGOCL29Loy5O/100w_s.gif",
+        "fixed_width_small_url": "http://media0.giphy.com/media/13bGOCL29Loy5O/100w.gif",
+        "fixed_width_small_width": "100",
+        "id": "13bGOCL29Loy5O",
+        "image_frames": "13",
+        "image_height": "205",
+        "image_mp4_url": "http://media0.giphy.com/media/13bGOCL29Loy5O/giphy.mp4",
+        "image_original_url": "http://media0.giphy.com/media/13bGOCL29Loy5O/giphy.gif",
+        "image_url": "http://media0.giphy.com/media/13bGOCL29Loy5O/giphy.gif",
+        "image_width": "500",
+        "type": "gif",
+        "url": "http://giphy.com/gifs/american-psycho-quote-text-13bGOCL29Loy5O",
+        "username": ""
+    },
+    "meta": {
+        "msg": "OK",
+        "status": 200
+    }
+}

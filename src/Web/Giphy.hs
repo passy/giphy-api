@@ -70,12 +70,14 @@ module Web.Giphy
   , searchPagination
   , singleGifItem
   , translateItem
+  , randomGifItem
   -- * API calls
   -- $api
   , search
   , searchOffset
   , translate
   , gif
+  , random
   ) where
 
 import           Control.Monad              (MonadPlus (), mzero)
@@ -119,6 +121,10 @@ newtype Query = Query T.Text
 
 -- | A phrase or term used for translation.
 newtype Phrase = Phrase T.Text
+  deriving (Servant.ToText, Servant.FromText, Show, Eq)
+
+-- | A tag to retrieve a random GIF for.
+newtype Tag = Tag T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
 
 -- | A unique gif identifier.
@@ -235,6 +241,24 @@ instance Aeson.FromJSON SingleGifResponse where
     SingleGifResponse <$> o .: "data"
   parseJSON _ = error "Invalid GIF response."
 
+-- | A single gif as part of a response.
+newtype RandomResponse = RandomResponse {
+  _randomGifItem :: Gif
+} deriving (Show, Eq, Ord, Generic)
+
+Lens.makeLenses ''RandomResponse
+
+instance Aeson.FromJSON RandomResponse where
+  parseJSON (Aeson.Object o) =
+    RandomResponse <$> (mkGif =<< (o .: "data"))
+    where
+      mkGif d =
+        Gif <$> d .: "id"
+            <*> pure ""
+            <*> fromURI (d .: "url")
+            <*> pure Map.empty
+  parseJSON _ = error "Invalid GIF response."
+
 -- | The Giphy API
 type GiphyAPI = "v1"
     :> "gifs"
@@ -254,6 +278,11 @@ type GiphyAPI = "v1"
     :> Servant.Capture "gif_id" GifId
     :> Servant.QueryParam "api_key" Key
     :> Servant.Get '[Servant.JSON] SingleGifResponse
+  :<|> "v1"
+    :> "random"
+    :> Servant.QueryParam "api_key" Key
+    :> Servant.QueryParam "tag" Tag
+    :> Servant.Get '[Servant.JSON] RandomResponse
 
 api :: Proxy.Proxy GiphyAPI
 api = Proxy.Proxy
@@ -274,7 +303,12 @@ gif'
   -> Maybe Key
   -> EitherT Servant.ServantError IO SingleGifResponse
 
-search' :<|> translate' :<|> gif' = Servant.client api host
+random'
+  :: Maybe Key
+  -> Maybe Tag
+  -> EitherT Servant.ServantError IO RandomResponse
+
+search' :<|> translate' :<|> gif' :<|> random' = Servant.client api host
   where host = Servant.BaseUrl Servant.Https "api.giphy.com" 443
 
 -- $api
@@ -320,6 +354,15 @@ translate
 translate phrase = do
   key <- Reader.asks configApiKey
   lift $ translate' (pure key) (pure phrase)
+
+-- | Issue a request for a random GIF for the given (optional) tag.
+-- E.g. <http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=american+psycho>
+random
+  :: Maybe Tag
+  -> Giphy RandomResponse
+random tag = do
+  key <- Reader.asks configApiKey
+  lift $ random' (pure key) tag
 
 -- $giphy
 --
