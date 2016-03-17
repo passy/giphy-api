@@ -1,6 +1,6 @@
 name:                givegif
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            Giphy HTTP API wrapper and CLI search tool.
 description:         Please see README.md
 homepage:            http://github.com/passy/givegif#readme
 license:             BSD3
@@ -10,7 +10,6 @@ maintainer:          phartig@rdrei.net
 copyright:           2016, Pascal Hartig
 category:            Web
 build-type:          Simple
--- extra-source-files:
 cabal-version:       >=1.10
 
 library
