@@ -56,9 +56,13 @@ module Web.Giphy
   , gifSlug
   , gifUrl
   , imageHeight
-  , imageMp4Url
   , imageUrl
+  , imageSize
   , imageWidth
+  , imageMp4Url
+  , imageMp4Size
+  , imageWebpUrl
+  , imageWebpSize
   , paginationCount
   , paginationOffset
   , paginationTotalCount
@@ -132,10 +136,14 @@ newtype PaginationOffset = PaginationOffset Int
 
 -- | An image contained in a Giphy response.
 data Image = Image {
-    _imageUrl    :: Maybe URI.URI
-  , _imageMp4Url :: Maybe URI.URI
-  , _imageWidth  :: Maybe Int
-  , _imageHeight :: Maybe Int
+    _imageUrl      :: Maybe URI.URI
+  , _imageSize     :: Maybe Int
+  , _imageMp4Url   :: Maybe URI.URI
+  , _imageMp4Size  :: Maybe Int
+  , _imageWebpUrl  :: Maybe URI.URI
+  , _imageWebpSize :: Maybe Int
+  , _imageWidth    :: Maybe Int
+  , _imageHeight   :: Maybe Int
 } deriving (Show, Eq, Ord, Generic)
 
 Lens.makeLenses ''Image
@@ -143,7 +151,11 @@ Lens.makeLenses ''Image
 instance Aeson.FromJSON Image where
   parseJSON (Aeson.Object o) =
     Image <$> (fromURI <$> (o .:? "url"))
+          <*> (fromInt <$> (o .:? "size"))
           <*> (fromURI <$> (o .:? "mp4"))
+          <*> (fromInt <$> (o .:? "mp4_size"))
+          <*> (fromURI <$> (o .:? "webp"))
+          <*> (fromInt <$> (o .:? "webp_size"))
           <*> (fromInt <$> (o .:? "width"))
           <*> (fromInt <$> (o .:? "height"))
   parseJSON _ = error "Invalid image response."

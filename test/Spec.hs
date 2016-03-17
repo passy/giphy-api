@@ -66,6 +66,11 @@ main = hspec $ do
         images ^? at "fixed_height" . traverse . Giphy.imageUrl . traverse `shouldBe`
           parseURI "https://media0.giphy.com/media/QgcQLZa6glP2w/200.gif"
 
+        images ^? at "looping" . traverse . Giphy.imageMp4Url . traverse `shouldBe`
+          parseURI "https://media.giphy.com/media/QgcQLZa6glP2w/giphy-loop.mp4"
+
+        images ^? at "fixed_width_small" . traverse . Giphy.imageMp4Size . traverse `shouldBe` Just 39646
+
       it "parses a translate response" $ do
         resp <- readFixture "translate_response.json"
         let item = case Aeson.eitherDecode resp of
