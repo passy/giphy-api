@@ -7,15 +7,14 @@ import qualified Options.Applicative    as Opt
 import qualified Web.Giphy              as Giphy
 
 import           Control.Applicative    ((<**>))
-import           Data.Version           (Version (), showVersion)
-import           Paths_givegif          (version)
-
-import           Data.Monoid            ((<>))
-
 import           Control.Lens.At        (at)
 import           Control.Lens.Cons      (_head)
 import           Control.Lens.Operators
 import           Control.Lens.Prism     (_Right)
+import           Data.Monoid            ((<>))
+import           Data.Version           (Version (), showVersion)
+import           Paths_giphy_api        (version)
+import           System.Environment     (getProgName)
 
 data Options = Options
   { query        :: T.Text
@@ -34,21 +33,23 @@ options = Options . T.pack <$> Opt.argument Opt.str
                             <> Opt.short 't'
                             <> Opt.help "Use translate instead of search" )
 
-cliParser :: Version -> Opt.ParserInfo Options
-cliParser ver =
+cliParser :: String -> Version -> Opt.ParserInfo Options
+cliParser progName ver =
   Opt.info ( Opt.helper <*> options <**> versionInfo )
     ( Opt.fullDesc
    <> Opt.progDesc "Find GIFs on the command line."
-   <> Opt.header "givegif" )
+   <> Opt.header progName )
   where
-    versionInfo = Opt.infoOption ( "givegif " <> showVersion ver )
+    versionInfo = Opt.infoOption ( unwords [progName, showVersion ver] )
       ( Opt.short 'V'
      <> Opt.long "version"
      <> Opt.hidden
      <> Opt.help "Show version information" )
 
 main :: IO ()
-main = Opt.execParser (cliParser version) >>= run
+main = do
+  progName <- getProgName
+  Opt.execParser (cliParser progName version) >>= run
   where
     run :: Options -> IO ()
     run opts = do

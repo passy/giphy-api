@@ -2,18 +2,18 @@
 --
 -- see: https://github.com/sol/hpack
 
-name:                givegif
-version:             0.1.0.0
-synopsis:            Giphy HTTP API wrapper and CLI search tool.
-description:         Please see README.md
-homepage:            http://github.com/passy/givegif#readme
-license:             BSD3
-license-file:        LICENSE
-author:              Pascal Hartig
-maintainer:          Pascal Hartig <phartig@rdrei.net>
-category:            Web
-build-type:          Simple
-cabal-version:       >= 1.10
+name:           giphy-api
+version:        0.1.0.0
+synopsis:       Giphy HTTP API wrapper and CLI search tool.
+description:    Please see README.md
+category:       Web
+homepage:       http://github.com/passy/giphy-api#readme
+author:         Pascal Hartig
+maintainer:     Pascal Hartig <phartig@rdrei.net>
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
 
 library
   hs-source-dirs:
@@ -34,10 +34,10 @@ library
   exposed-modules:
       Web.Giphy
   other-modules:
-      Paths_givegif
+      Paths_giphy_api
   default-language: Haskell2010
 
-executable givegif
+executable giphy-search
   main-is: Main.hs
   hs-source-dirs:
       app
@@ -46,7 +46,7 @@ executable givegif
       base >= 4.7 && < 5
     , text
     , network-uri
-    , givegif
+    , giphy-api
     , lens
     , optparse-applicative
   default-language: Haskell2010
@@ -61,7 +61,7 @@ test-suite spec
       base >= 4.7 && < 5
     , text
     , network-uri
-    , givegif
+    , giphy-api
     , aeson
     , basic-prelude
     , bytestring
