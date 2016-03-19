@@ -1,7 +1,7 @@
-# WIP: givegif
+# giphy-api
 [![Build Status](https://travis-ci.org/passy/givegif.svg?branch=master)](https://travis-ci.org/passy/givegif)
 
-Work in progress. A CLI thing for GIFs via Giphy.
+Work in progress.
 
 ## Building
 
@@ -14,6 +14,7 @@ $ stack install
 ## API Examples
 
 ```haskell
-λ: import Data.Text
-λ: search (Key "dc6zaTOxFJmzC") (Query "cute puppies")
+λ: import qualified Web.Giphy as Giphy
+λ: let config = Giphy.GiphyConfig $ Giphy.Key "dc6zaTOxFJmzC"
+λ: Giphy.runGiphy (Giphy.search (Giphy.Query "cute puppies")) config
 ```
