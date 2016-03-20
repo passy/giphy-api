@@ -81,7 +81,7 @@ module Web.Giphy
   , random
   ) where
 
-import           Control.Monad              (MonadPlus (), mzero)
+import           Control.Monad              (MonadPlus (), mzero, join, forM)
 import qualified Control.Monad.Reader       as Reader
 import           Control.Monad.Trans        (MonadIO (), lift, liftIO)
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
@@ -156,16 +156,20 @@ data Image = Image {
 
 Lens.makeLenses ''Image
 
+parseImageJSON :: T.Text -> Aeson.Object -> Aeson.Parser Image
+parseImageJSON prefix o =
+  let p = if T.null prefix then "" else prefix <> "_"
+  in Image <$> (fromURI <$> (o .:? (p <> "url")))
+           <*> (fromInt <$> (o .:? (p <> "size")))
+           <*> (fromURI <$> (o .:? (p <> "mp4")))
+           <*> (fromInt <$> (o .:? (p <> "mp4_size")))
+           <*> (fromURI <$> (o .:? (p <> "webp")))
+           <*> (fromInt <$> (o .:? (p <> "webp_size")))
+           <*> (fromInt <$> (o .:? (p <> "width")))
+           <*> (fromInt <$> (o .:? (p <> "height")))
+
 instance Aeson.FromJSON Image where
-  parseJSON (Aeson.Object o) =
-    Image <$> (fromURI <$> (o .:? "url"))
-          <*> (fromInt <$> (o .:? "size"))
-          <*> (fromURI <$> (o .:? "mp4"))
-          <*> (fromInt <$> (o .:? "mp4_size"))
-          <*> (fromURI <$> (o .:? "webp"))
-          <*> (fromInt <$> (o .:? "webp_size"))
-          <*> (fromInt <$> (o .:? "width"))
-          <*> (fromInt <$> (o .:? "height"))
+  parseJSON (Aeson.Object o) = parseImageJSON "" o
   parseJSON _ = error "Invalid image response."
 
 -- | Mapping from a 'T.Text' identifier to an 'Image'.
@@ -270,14 +274,13 @@ instance Aeson.FromJSON RandomResponse where
             <*> mkImageMap d
 
       mkImageMap :: Aeson.Object -> Aeson.Parser ImageMap
-      mkImageMap d = Map.fromList <$> mapM (extractImage d) randomImageKeys
+      mkImageMap = (Map.fromList <$>) . forM keys . uncurry . extractImage
+        where
+          dup = join (,)
+          keys = ("image", "original") : (dup <$> randomImageKeys)
 
-      extractImage :: Aeson.Object -> T.Text -> Aeson.Parser (T.Text, Image)
-      extractImage d key = do
-        _imageUrl <- fromURI <$> (o .:? (key <> "_url"))
-        _imageWidth <- fromInt <$> (o .:? (key <> "_width"))
-        _imageHeight <- fromInt <$> (o .:? (key <> "_height"))
-        return (key, Image { _imageUrl, _imageWidth, _imageHeight })
+      extractImage :: Aeson.Object -> T.Text -> T.Text -> Aeson.Parser (T.Text, Image)
+      extractImage d key tag = (,) <$> pure tag <*> parseImageJSON key d
 
   parseJSON _ = error "Invalid GIF response."
 

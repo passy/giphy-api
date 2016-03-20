@@ -127,11 +127,11 @@ main = hspec $ do
           , "original"
           ]
 
-        images ^? at "original" . traverse . Giphy.imageMp4Url . traverse `shouldBe`
-          parseURI "http://media0.giphy.com/media/13bGOCL29Loy5O/giphy.mp4"
+        images ^? at "original" . traverse . Giphy.imageUrl . traverse `shouldBe`
+          parseURI "http://media0.giphy.com/media/13bGOCL29Loy5O/giphy.gif"
 
         images ^? at "fixed_height_small" . traverse . Giphy.imageUrl . traverse `shouldBe`
           parseURI "http://media0.giphy.com/media/13bGOCL29Loy5O/100.gif"
 
-        images ^? at "fixed_width_downsampled_height" . traverse . Giphy.imageHeight . traverse `shouldBe`
+        images ^? at "fixed_width_downsampled" . traverse . Giphy.imageHeight . traverse `shouldBe`
           pure 82
