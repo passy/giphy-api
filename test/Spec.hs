@@ -118,7 +118,7 @@ main = hspec $ do
 
         let images = item ^. Giphy.gifImages
 
-        Map.keys images `shouldBe` [
+        Map.keys images `shouldMatchList` [
             "fixed_height_downsampled"
           , "fixed_height_small"
           , "fixed_width_downsampled"
