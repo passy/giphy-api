@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordPuns                 #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeOperators              #-}
 
@@ -87,6 +88,7 @@ import           Control.Monad.Trans.Either (EitherT, runEitherT)
 import           Data.Aeson                 ((.:), (.:?))
 import qualified Data.Aeson.Types           as Aeson
 import qualified Data.Map.Strict            as Map
+import           Data.Monoid                ((<>))
 import qualified Data.Proxy                 as Proxy
 import qualified Data.Text                  as T
 import           GHC.Generics               (Generic ())
@@ -265,13 +267,17 @@ instance Aeson.FromJSON RandomResponse where
         Gif <$> d .: "id"
             <*> pure ""
             <*> fromURI (d .: "url")
-            <*> pure (mkImageMap d)
+            <*> mkImageMap d
 
-      mkImageMap :: Aeson.Object -> ImageMap
-      mkImageMap d = Map.fromList $ extractImage d <$> randomImageKeys
+      mkImageMap :: Aeson.Object -> Aeson.Parser ImageMap
+      mkImageMap d = Map.fromList <$> mapM (extractImage d) randomImageKeys
 
-      extractImage :: Aeson.Object -> T.Text -> (T.Text, Image)
-      extractImage = undefined
+      extractImage :: Aeson.Object -> T.Text -> Aeson.Parser (T.Text, Image)
+      extractImage d key = do
+        _imageUrl <- fromURI <$> (o .:? (key <> "_url"))
+        _imageWidth <- fromInt <$> (o .:? (key <> "_width"))
+        _imageHeight <- fromInt <$> (o .:? (key <> "_height"))
+        return (key, Image { _imageUrl, _imageWidth, _imageHeight })
 
   parseJSON _ = error "Invalid GIF response."
 
