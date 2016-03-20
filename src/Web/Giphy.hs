@@ -70,6 +70,7 @@ module Web.Giphy
   , searchPagination
   , singleGifItem
   , translateItem
+  , randomGifItem
   -- * API calls
   -- $api
   , search
@@ -249,11 +250,13 @@ Lens.makeLenses ''RandomResponse
 
 instance Aeson.FromJSON RandomResponse where
   parseJSON (Aeson.Object o) =
-    RandomResponse <$> mkGif (o .: "data")
-
+    RandomResponse <$> (mkGif =<< (o .: "data"))
     where
-      mkGif :: _ -> Aeson.Parser Gif
-      mkGif = undefined
+      mkGif d =
+        Gif <$> d .: "id"
+            <*> pure ""
+            <*> fromURI (d .: "url")
+            <*> pure Map.empty
   parseJSON _ = error "Invalid GIF response."
 
 -- | The Giphy API
@@ -356,7 +359,7 @@ translate phrase = do
 -- E.g. <http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=american+psycho>
 random
   :: Maybe Tag
-  -> Giphy TranslateResponse
+  -> Giphy RandomResponse
 random tag = do
   key <- Reader.asks configApiKey
   lift $ random' (pure key) tag
