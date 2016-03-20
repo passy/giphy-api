@@ -248,15 +248,31 @@ newtype RandomResponse = RandomResponse {
 
 Lens.makeLenses ''RandomResponse
 
+randomImageKeys :: [T.Text]
+randomImageKeys = [ "fixed_height_downsampled"
+                  , "fixed_height_small"
+                  , "fixed_width_downsampled"
+                  , "fixed_width_small"
+                  , "fixed_width"
+                  ]
+
 instance Aeson.FromJSON RandomResponse where
   parseJSON (Aeson.Object o) =
     RandomResponse <$> (mkGif =<< (o .: "data"))
     where
+      mkGif :: Aeson.Object -> Aeson.Parser Gif
       mkGif d =
         Gif <$> d .: "id"
             <*> pure ""
             <*> fromURI (d .: "url")
-            <*> pure Map.empty
+            <*> pure (mkImageMap d)
+
+      mkImageMap :: Aeson.Object -> ImageMap
+      mkImageMap d = Map.fromList $ extractImage d <$> randomImageKeys
+
+      extractImage :: Aeson.Object -> T.Text -> (T.Text, Image)
+      extractImage = undefined
+
   parseJSON _ = error "Invalid GIF response."
 
 -- | The Giphy API
