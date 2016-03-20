@@ -1,7 +1,7 @@
 # giphy-api
 [![Build Status](https://travis-ci.org/passy/givegif.svg?branch=master)](https://travis-ci.org/passy/givegif)
 
-Work in progress.
+Work in progress: Giphy HTTP API Wrapper.
 
 ## Building
 
@@ -9,6 +9,15 @@ Work in progress.
 $ stack setup
 $ stack test
 $ stack install
+```
+
+## Sample CLI Tool Usage
+
+```bash
+$ stack exec giphy-search -- "puppies"
+Just https://media2.giphy.com/media/PjQFtJnmdOlwI/giphy.gif
+$ stack exec giphy-search -- --translate "superman"
+Just https://media3.giphy.com/media/eOewytQL4tOOA/giphy.gif
 ```
 
 ## API Examples
