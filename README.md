@@ -1,5 +1,5 @@
 # giphy-api
-[![Build Status](https://travis-ci.org/passy/givegif.svg?branch=master)](https://travis-ci.org/passy/givegif)
+[![Build Status](https://travis-ci.org/passy/giphy-api.svg?branch=master)](https://travis-ci.org/passy/giphy-api)
 
 Work in progress: Giphy HTTP API Wrapper.
 
