@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordPuns                 #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeOperators              #-}
 
@@ -70,21 +71,24 @@ module Web.Giphy
   , searchPagination
   , singleGifItem
   , translateItem
+  , randomGifItem
   -- * API calls
   -- $api
   , search
   , searchOffset
   , translate
   , gif
+  , random
   ) where
 
-import           Control.Monad              (MonadPlus (), mzero)
+import           Control.Monad              (MonadPlus (), mzero, join, forM)
 import qualified Control.Monad.Reader       as Reader
 import           Control.Monad.Trans        (MonadIO (), lift, liftIO)
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
 import           Data.Aeson                 ((.:), (.:?))
 import qualified Data.Aeson.Types           as Aeson
 import qualified Data.Map.Strict            as Map
+import           Data.Monoid                ((<>))
 import qualified Data.Proxy                 as Proxy
 import qualified Data.Text                  as T
 import           GHC.Generics               (Generic ())
@@ -121,6 +125,10 @@ newtype Query = Query T.Text
 newtype Phrase = Phrase T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
 
+-- | A tag to retrieve a random GIF for.
+newtype Tag = Tag T.Text
+  deriving (Servant.ToText, Servant.FromText, Show, Eq)
+
 -- | A unique gif identifier.
 newtype GifId = GifId T.Text
   deriving (Servant.ToText, Servant.FromText, Show, Eq)
@@ -148,16 +156,20 @@ data Image = Image {
 
 Lens.makeLenses ''Image
 
+parseImageJSON :: T.Text -> Aeson.Object -> Aeson.Parser Image
+parseImageJSON prefix o =
+  let p = if T.null prefix then "" else prefix <> "_"
+  in Image <$> (fromURI <$> (o .:? (p <> "url")))
+           <*> (fromInt <$> (o .:? (p <> "size")))
+           <*> (fromURI <$> (o .:? (p <> "mp4")))
+           <*> (fromInt <$> (o .:? (p <> "mp4_size")))
+           <*> (fromURI <$> (o .:? (p <> "webp")))
+           <*> (fromInt <$> (o .:? (p <> "webp_size")))
+           <*> (fromInt <$> (o .:? (p <> "width")))
+           <*> (fromInt <$> (o .:? (p <> "height")))
+
 instance Aeson.FromJSON Image where
-  parseJSON (Aeson.Object o) =
-    Image <$> (fromURI <$> (o .:? "url"))
-          <*> (fromInt <$> (o .:? "size"))
-          <*> (fromURI <$> (o .:? "mp4"))
-          <*> (fromInt <$> (o .:? "mp4_size"))
-          <*> (fromURI <$> (o .:? "webp"))
-          <*> (fromInt <$> (o .:? "webp_size"))
-          <*> (fromInt <$> (o .:? "width"))
-          <*> (fromInt <$> (o .:? "height"))
+  parseJSON (Aeson.Object o) = parseImageJSON "" o
   parseJSON _ = error "Invalid image response."
 
 -- | Mapping from a 'T.Text' identifier to an 'Image'.
@@ -235,6 +247,43 @@ instance Aeson.FromJSON SingleGifResponse where
     SingleGifResponse <$> o .: "data"
   parseJSON _ = error "Invalid GIF response."
 
+-- | A single gif as part of a response.
+newtype RandomResponse = RandomResponse {
+  _randomGifItem :: Gif
+} deriving (Show, Eq, Ord, Generic)
+
+Lens.makeLenses ''RandomResponse
+
+randomImageKeys :: [T.Text]
+randomImageKeys = [ "fixed_height_downsampled"
+                  , "fixed_height_small"
+                  , "fixed_width_downsampled"
+                  , "fixed_width_small"
+                  , "fixed_width"
+                  ]
+
+instance Aeson.FromJSON RandomResponse where
+  parseJSON (Aeson.Object o) =
+    RandomResponse <$> (mkGif =<< (o .: "data"))
+    where
+      mkGif :: Aeson.Object -> Aeson.Parser Gif
+      mkGif d =
+        Gif <$> d .: "id"
+            <*> pure ""
+            <*> fromURI (d .: "url")
+            <*> mkImageMap d
+
+      mkImageMap :: Aeson.Object -> Aeson.Parser ImageMap
+      mkImageMap = (Map.fromList <$>) . forM keys . uncurry . extractImage
+        where
+          dup = join (,)
+          keys = ("image", "original") : (dup <$> randomImageKeys)
+
+      extractImage :: Aeson.Object -> T.Text -> T.Text -> Aeson.Parser (T.Text, Image)
+      extractImage d key tag = (,) <$> pure tag <*> parseImageJSON key d
+
+  parseJSON _ = error "Invalid GIF response."
+
 -- | The Giphy API
 type GiphyAPI = "v1"
     :> "gifs"
@@ -254,6 +303,11 @@ type GiphyAPI = "v1"
     :> Servant.Capture "gif_id" GifId
     :> Servant.QueryParam "api_key" Key
     :> Servant.Get '[Servant.JSON] SingleGifResponse
+  :<|> "v1"
+    :> "random"
+    :> Servant.QueryParam "api_key" Key
+    :> Servant.QueryParam "tag" Tag
+    :> Servant.Get '[Servant.JSON] RandomResponse
 
 api :: Proxy.Proxy GiphyAPI
 api = Proxy.Proxy
@@ -274,7 +328,12 @@ gif'
   -> Maybe Key
   -> EitherT Servant.ServantError IO SingleGifResponse
 
-search' :<|> translate' :<|> gif' = Servant.client api host
+random'
+  :: Maybe Key
+  -> Maybe Tag
+  -> EitherT Servant.ServantError IO RandomResponse
+
+search' :<|> translate' :<|> gif' :<|> random' = Servant.client api host
   where host = Servant.BaseUrl Servant.Https "api.giphy.com" 443
 
 -- $api
@@ -320,6 +379,15 @@ translate
 translate phrase = do
   key <- Reader.asks configApiKey
   lift $ translate' (pure key) (pure phrase)
+
+-- | Issue a request for a random GIF for the given (optional) tag.
+-- E.g. <http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=american+psycho>
+random
+  :: Maybe Tag
+  -> Giphy RandomResponse
+random tag = do
+  key <- Reader.asks configApiKey
+  lift $ random' (pure key) tag
 
 -- $giphy
 --

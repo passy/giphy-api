@@ -105,3 +105,33 @@ main = hspec $ do
 
         images ^? at "fixed_height" . traverse . Giphy.imageUrl . traverse `shouldBe`
           parseURI "https://media0.giphy.com/media/Zlkbqhurvg4Zq/200.gif"
+
+      it "parses a 'random' response" $ do
+        resp <- readFixture "random_response.json"
+        let item = case Aeson.eitherDecode resp of
+                    Left err -> error err
+                    Right i -> i ^?! Giphy.randomGifItem
+
+        item ^. Giphy.gifId `shouldBe` "13bGOCL29Loy5O"
+        item ^. Giphy.gifSlug `shouldBe` ""
+        item ^. Giphy.gifUrl `shouldBe` fromJust (parseURI "http://giphy.com/gifs/american-psycho-quote-text-13bGOCL29Loy5O")
+
+        let images = item ^. Giphy.gifImages
+
+        Map.keys images `shouldMatchList` [
+            "fixed_height_downsampled"
+          , "fixed_height_small"
+          , "fixed_width_downsampled"
+          , "fixed_width_small"
+          , "fixed_width"
+          , "original"
+          ]
+
+        images ^? at "original" . traverse . Giphy.imageUrl . traverse `shouldBe`
+          parseURI "http://media0.giphy.com/media/13bGOCL29Loy5O/giphy.gif"
+
+        images ^? at "fixed_height_small" . traverse . Giphy.imageUrl . traverse `shouldBe`
+          parseURI "http://media0.giphy.com/media/13bGOCL29Loy5O/100.gif"
+
+        images ^? at "fixed_width_downsampled" . traverse . Giphy.imageHeight . traverse `shouldBe`
+          pure 82
