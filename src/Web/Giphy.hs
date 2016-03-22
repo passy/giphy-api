@@ -2,8 +2,8 @@
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NamedFieldPuns             #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE RecordPuns                 #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeOperators              #-}
 
@@ -81,7 +81,7 @@ module Web.Giphy
   , random
   ) where
 
-import           Control.Monad              (MonadPlus (), mzero, join, forM)
+import           Control.Monad              (MonadPlus (), forM, join, mzero)
 import qualified Control.Monad.Reader       as Reader
 import           Control.Monad.Trans        (MonadIO (), lift, liftIO)
 import           Control.Monad.Trans.Either (EitherT, runEitherT)
