@@ -2,38 +2,38 @@
 
 module Main where
 
-import qualified Data.Text              as T
-import qualified Options.Applicative    as Opt
+import qualified Data.Text                 as T
+import qualified Options.Applicative       as Opt
 import qualified Options.Applicative.Types as Opt
-import qualified Web.Giphy              as Giphy
+import qualified Web.Giphy                 as Giphy
 
-import           Control.Applicative    ((<**>), (<|>), optional)
-import           Control.Lens.At        (at)
-import           Control.Lens.Cons      (_head)
+import           Control.Applicative       (optional, (<**>), (<|>))
+import           Control.Lens.At           (at)
+import           Control.Lens.Cons         (_head)
 import           Control.Lens.Operators
-import           Control.Lens.Prism     (_Right)
-import           Data.Monoid            ((<>))
-import           Data.Version           (Version (), showVersion)
-import           Paths_giphy_api        (version)
-import           System.Environment     (getProgName)
+import           Control.Lens.Prism        (_Right)
+import           Data.Monoid               ((<>))
+import           Data.Version              (Version (), showVersion)
+import           Paths_giphy_api           (version)
+import           System.Environment        (getProgName)
 
-data Options =
-  OptSearch T.Text | OptTranslate T.Text | OptRandom (Maybe T.Text)
+data Options = OptSearch T.Text | OptTranslate T.Text | OptRandom (Maybe T.Text)
 
 apiKey :: Giphy.Key
 apiKey = Giphy.Key "dc6zaTOxFJmzC"
 
 options :: Opt.Parser Options
 options = ( OptSearch <$> textOption
-                      ( Opt.long "search"
-                     <> Opt.short 's'
-                     <> Opt.help "Use search to find a matching GIF." ) )
-        <|> ( OptTranslate <$> textOption
-                      ( Opt.long "translate"
-                     <> Opt.short 't'
-                     <> Opt.help "Use translate to find a matching GIF." ) )
-        <|> ( OptRandom <$> optional ( textArgument ( Opt.metavar "RANDOM_TAG" ) ) )
+                        ( Opt.long "search"
+                       <> Opt.short 's'
+                       <> Opt.help "Use search to find a matching GIF." ) )
+      <|> ( OptTranslate <$> textOption
+                           ( Opt.long "translate"
+                          <> Opt.short 't'
+                          <> Opt.help "Use translate to find a matching GIF." ) )
+      <|> ( OptRandom <$> optional ( textArgument ( Opt.metavar "RANDOM_TAG" ) ) )
   where
+    -- TODO: This seems quite useful. Maybe publish as Options.Applicative.Text?
     text :: Opt.ReadM T.Text
     text = T.pack <$> Opt.readerAsk
 
