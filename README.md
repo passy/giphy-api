@@ -1,7 +1,8 @@
 # giphy-api
 [![Build Status](https://travis-ci.org/passy/giphy-api.svg?branch=master)](https://travis-ci.org/passy/giphy-api)
 
-A Haskell wrapper for the [Giphy HTTP API](https://github.com/Giphy/GiphyAPI).
+A Haskell wrapper for the [Giphy HTTP API](https://github.com/Giphy/GiphyAPI)
+using [servant-client](https://hackage.haskell.org/package/servant-client).
 
 ## Usage
 
@@ -68,6 +69,9 @@ Nothing
 ```
 
 ## Missing features
+
+- No network configuration. No proxies, no TLS certificate pinning, no custom
+  networking stack. I'm still learning, let me know how to do this better!
 
 - There is no compiler flag at the moment to disable lenses if those aren't
   needed. The library, however, uses `microlens` so the overhead should be
