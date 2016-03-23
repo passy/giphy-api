@@ -35,6 +35,7 @@ module Web.Giphy
     Key(..)
   , Query(..)
   , Phrase(..)
+  , Tag(..)
   , Pagination(..)
   -- * Response Data Types
   -- $response
@@ -304,6 +305,7 @@ type GiphyAPI = "v1"
     :> Servant.QueryParam "api_key" Key
     :> Servant.Get '[Servant.JSON] SingleGifResponse
   :<|> "v1"
+    :> "gifs"
     :> "random"
     :> Servant.QueryParam "api_key" Key
     :> Servant.QueryParam "tag" Tag
