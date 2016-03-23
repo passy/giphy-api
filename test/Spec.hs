@@ -6,14 +6,14 @@ import           BasicPrelude
 import           Data.Maybe             (fromJust)
 import           System.Directory       (getCurrentDirectory)
 
+import           Control.Lens.At        (at)
+import           Control.Lens.Cons      (_head)
 import qualified Data.Aeson             as Aeson
 import qualified Data.ByteString.Lazy   as BS
 import qualified Data.Map.Strict        as Map
 import qualified Data.Text.Encoding     as TE
 import qualified Data.Text.IO           as TIO
 import           Network.URI            (parseURI)
-import           Control.Lens.Cons      (_head)
-import           Control.Lens.At        (at)
 
 import           Control.Lens.Operators
 import           Test.Hspec

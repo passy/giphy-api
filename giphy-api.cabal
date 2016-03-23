@@ -49,6 +49,8 @@ executable giphy-search
     , giphy-api
     , lens
     , optparse-applicative
+  other-modules:
+      Sample
   default-language: Haskell2010
 
 test-suite spec
