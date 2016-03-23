@@ -35,6 +35,7 @@ module Web.Giphy
     Key(..)
   , Query(..)
   , Phrase(..)
+  , Tag(..)
   , Pagination(..)
   -- * Response Data Types
   -- $response
