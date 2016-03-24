@@ -32,7 +32,7 @@ sample = do
       return $ Giphy._searchItems resp
 ```
 
-For a slightly more complex example, check out the [sample app](app/Main.src),
+For a slightly more complex example, check out the [sample app](app/Main.hs),
 which also features the use of lenses.
 
 ## Building
