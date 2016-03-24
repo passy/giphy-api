@@ -345,7 +345,7 @@ search' :<|> translate' :<|> gif' :<|> random' = Servant.client api host
 --
 
 -- | Issue a search request for the given query without specifying an offset.
--- E.g. <http://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC>
+-- E.g. <https://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC>
 search
   :: Query
   -> Giphy SearchResponse
@@ -355,7 +355,7 @@ search query = do
 
 -- | Issue a search request for the given query by specifying a
 -- pagination offset.
--- E.g. <http://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC&offset=25>
+-- E.g. <https://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC&offset=25>
 searchOffset
   :: Query
   -> PaginationOffset
@@ -365,7 +365,7 @@ searchOffset query offset = do
   lift $ search' (pure key) (pure offset) (pure query)
 
 -- | Issue a request for a single GIF identified by its 'GifId'.
--- E.g. <http://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
+-- E.g. <https://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
 gif
   :: GifId
   -> Giphy SingleGifResponse
@@ -374,7 +374,7 @@ gif gifid = do
   lift $ gif' gifid (pure key)
 
 -- | Issue a translate request for a given phrase or term.
--- E.g. <http://api.giphy.com/v1/gifs/translate?s=superman&api_key=dc6zaTOxFJmzC>
+-- E.g. <https://api.giphy.com/v1/gifs/translate?s=superman&api_key=dc6zaTOxFJmzC>
 translate
   :: Phrase
   -> Giphy TranslateResponse
@@ -383,7 +383,7 @@ translate phrase = do
   lift $ translate' (pure key) (pure phrase)
 
 -- | Issue a request for a random GIF for the given (optional) tag.
--- E.g. <http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=american+psycho>
+-- E.g. <https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=american+psycho>
 random
   :: Maybe Tag
   -> Giphy RandomResponse
