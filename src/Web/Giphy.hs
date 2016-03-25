@@ -37,6 +37,7 @@ module Web.Giphy
   , Phrase(..)
   , Tag(..)
   , Pagination(..)
+  , GifId(..)
   -- * Response Data Types
   -- $response
   , Gif(..)
