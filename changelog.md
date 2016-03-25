@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.2.0
+
+- Retrieve single GIFs via GifId.
+- Another attempt in reducing the deps on Hackage.
+
 ## v0.2.1.0
 
 - Expose RandomResponse(..) type for non-lens use.

@@ -3,7 +3,7 @@
 -- see: https://github.com/sol/hpack
 
 name:           giphy-api
-version:        0.2.1.0
+version:        0.2.2.0
 synopsis:       Giphy HTTP API wrapper and CLI search tool.
 description:    Please see README.md
 category:       Web
@@ -20,7 +20,7 @@ extra-source-files:
 
 flag buildSample
   description: Build the sample application.
-  manual: False
+  manual: True
   default: False
 
 library
