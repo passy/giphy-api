@@ -1,5 +1,1 @@
-dist
-.cabal-sandbox
-cabal.sandbox.config
-ltxbot.conf
-.stack-work/
+/.stack-work/
