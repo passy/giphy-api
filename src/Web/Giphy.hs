@@ -46,6 +46,7 @@ module Web.Giphy
   , SearchResponse(..)
   , SingleGifResponse(..)
   , TranslateResponse(..)
+  , RandomResponse(..)
   -- * Giphy Monad
   -- $giphy
   , GiphyConfig(..)
