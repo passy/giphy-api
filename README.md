@@ -42,7 +42,8 @@ Use [stack](http://haskellstack.org) to build this library.
 ```bash
 $ stack setup
 $ stack test
-$ stack build
+# Drop the flag if you don't want the sample app to be built.
+$ stack build --flag=giphy-api:buildSample
 # To install the sample tool
 $ stack install
 ```
