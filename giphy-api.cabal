@@ -38,7 +38,6 @@ library
     , network-uri
     , aeson
     , containers
-    , either
     , microlens
     , microlens-th
     , mtl

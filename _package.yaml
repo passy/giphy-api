@@ -30,7 +30,6 @@ library:
   dependencies:
     - aeson
     - containers
-    - either
     - microlens
     - microlens-th
     - mtl
