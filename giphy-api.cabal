@@ -31,6 +31,9 @@ library
     , mtl
     , servant
     , servant-client
+    , http-api-data
+    , http-client
+    , http-client-tls
   exposed-modules:
       Web.Giphy
   other-modules:
@@ -50,7 +53,7 @@ executable giphy-search
     , lens
     , optparse-applicative
   other-modules:
-      Sample
+      Paths_giphy_api
   default-language: Haskell2010
 
 test-suite spec

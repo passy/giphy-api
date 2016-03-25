@@ -31,6 +31,9 @@ library:
     - mtl
     - servant
     - servant-client
+    - http-api-data
+    - http-client
+    - http-client-tls
   other-modules:
     - Paths_giphy_api
   exposed-modules:
@@ -45,6 +48,8 @@ executables:
       - giphy-api
       - lens
       - optparse-applicative
+    other-modules:
+      - Paths_giphy_api
 
 tests:
   spec:
