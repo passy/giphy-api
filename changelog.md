@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.3.0
+
+- Losen upper bounds for Stackage inclusion (aeson 0.11 compat)
+
 ## v0.2.2.0
 
 - Retrieve single GIFs via GifId.
