@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.5.0
+
+- Clarify servant bounds
+
 ## v0.2.4.0
 
 - Include extra source files for stackage test suite

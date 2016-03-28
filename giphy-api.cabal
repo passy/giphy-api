@@ -3,7 +3,7 @@
 -- see: https://github.com/sol/hpack
 
 name:           giphy-api
-version:        0.2.4.0
+version:        0.2.5.0
 synopsis:       Giphy HTTP API wrapper and CLI search tool.
 description:    Please see README.md
 category:       Web
@@ -42,8 +42,8 @@ library
     , microlens
     , microlens-th
     , mtl
-    , servant
-    , servant-client
+    , servant >= 0.4 && < 0.5
+    , servant-client >= 0.4 && < 0.5
   exposed-modules:
       Web.Giphy
   other-modules:
