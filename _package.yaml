@@ -1,5 +1,5 @@
 name: giphy-api
-version: 0.2.3.0
+version: 0.2.4.0
 synopsis: Giphy HTTP API wrapper and CLI search tool.
 description: Please see README.md
 homepage: http://github.com/passy/giphy-api#readme
@@ -9,6 +9,9 @@ maintainer: Pascal Hartig <phartig@rdrei.net>
 category: Web
 extra-source-files:
   - changelog.md
+  - README.md
+  - stack.yaml
+  - test/fixtures/*.json
 
 ghc-options:
   - -Wall
