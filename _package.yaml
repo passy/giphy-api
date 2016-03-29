@@ -30,12 +30,14 @@ library:
   dependencies:
     - aeson
     - containers
-    - either
     - microlens
     - microlens-th
     - mtl
-    - servant >= 0.4 && < 0.5
-    - servant-client >= 0.4 && < 0.5
+    - servant >= 0.5
+    - servant-client >= 0.5
+    - http-api-data
+    - http-client
+    - http-client-tls
   other-modules:
     - Paths_giphy_api
   exposed-modules:
