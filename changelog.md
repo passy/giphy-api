@@ -1,16 +1,21 @@
 # Changelog
 
+## v0.3.0.0
+
+- Upgrade to Servant 0.5. No changes in the API, but it's not in Stackage yet
+  (as of 2016-03-30).
+
 ## v0.2.5.0
 
-- Clarify servant bounds
+- Clarify servant bounds.
 
 ## v0.2.4.0
 
-- Include extra source files for stackage test suite
+- Include extra source files for stackage test suite.
 
 ## v0.2.3.0
 
-- Losen upper bounds for Stackage inclusion (aeson 0.11 compat)
+- Losen upper bounds for Stackage inclusion (aeson 0.11 compat).
 
 ## v0.2.2.0
 
@@ -28,4 +33,4 @@
 
 ## v0.1.0.0
 
-- Initial release
+- Initial release.
