@@ -6,6 +6,8 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE KindSignatures             #-}
 
 -- |
 -- Provides a Giphy monad that can be used to issue selected API calls under a
@@ -53,6 +55,7 @@ module Web.Giphy
   , GiphyConfig(..)
   , Giphy()
   , runGiphy
+  , runGiphy'
   -- * Lenses
   -- $lenses
   , gifId
@@ -82,29 +85,30 @@ module Web.Giphy
   , translate
   , gif
   , random
+  -- NO
+  , liftQuery
   ) where
 
-import           Control.Monad           (MonadPlus (), forM, join, mzero)
-import           Control.Monad.Except    (ExceptT, runExceptT)
-import qualified Control.Monad.Reader    as Reader
-import           Control.Monad.Trans     (MonadIO (), lift, liftIO)
-import           Data.Aeson              ((.:), (.:?))
-import qualified Data.Aeson.Types        as Aeson
-import qualified Data.Map.Strict         as Map
-import           Data.Monoid             ((<>))
-import qualified Data.Proxy              as Proxy
-import qualified Data.Text               as T
-import           GHC.Generics            (Generic ())
-import qualified Lens.Micro.TH           as Lens
-import qualified Network.HTTP.Client     as HTTP
-import           Network.HTTP.Client.TLS (tlsManagerSettings)
-import qualified Network.URI             as URI
-import           Servant.API             ((:<|>) (..), (:>))
-import qualified Servant.API             as Servant
-import qualified Servant.Client          as Servant
-import qualified System.IO.Unsafe        as Unsafe
-import qualified Text.Read               as Read
-import qualified Web.HttpApiData         as Data
+import           Control.Monad             (MonadPlus (), forM, join, mzero)
+import           Control.Monad.Except      (ExceptT, runExceptT)
+import qualified Control.Monad.Reader      as Reader
+import           Control.Monad.Trans       (MonadIO (), lift, liftIO)
+import           Data.Aeson                ((.:), (.:?))
+import qualified Data.Aeson.Types          as Aeson
+import qualified Data.Map.Strict           as Map
+import           Data.Monoid               ((<>))
+import qualified Data.Proxy                as Proxy
+import qualified Data.Text                 as T
+import           GHC.Generics              (Generic ())
+import qualified Lens.Micro.TH             as Lens
+import qualified Network.HTTP.Client       as HTTP
+import           Network.HTTP.Client.TLS   (tlsManagerSettings)
+import qualified Network.URI               as URI
+import           Servant.API               ((:<|>) (..), (:>))
+import qualified Servant.API               as Servant
+import qualified Servant.Client            as Servant
+import qualified Text.Read                 as Read
+import qualified Web.HttpApiData           as Data
 
 maybeParse :: (Monad m, MonadPlus m) => (a -> Maybe b) -> m a -> m b
 maybeParse f = (maybe mzero return . f =<<)
@@ -312,37 +316,39 @@ type GiphyAPI = "search"
 api :: Proxy.Proxy GiphyAPI
 api = Proxy.Proxy
 
--- From the servant docs:
--- (Yes, the usage of unsafePerformIO is very ugly, we know.
---  Hopefully soon it’ll be possible to do without.)
-{-# NOINLINE __manager #-}
-__manager :: HTTP.Manager
-__manager = Unsafe.unsafePerformIO $ HTTP.newManager tlsManagerSettings
+baseUrl :: Servant.BaseUrl
+baseUrl = Servant.BaseUrl Servant.Https "api.giphy.com" 443 "v1/gifs/"
 
 search'
   :: Maybe Key
   -> Maybe PaginationOffset
   -> Maybe Query
+  -> HTTP.Manager
+  -> Servant.BaseUrl
   -> ExceptT Servant.ServantError IO SearchResponse
 
 translate'
   :: Maybe Key
   -> Maybe Phrase
+  -> HTTP.Manager
+  -> Servant.BaseUrl
   -> ExceptT Servant.ServantError IO TranslateResponse
 
 gif'
   :: GifId
   -> Maybe Key
+  -> HTTP.Manager
+  -> Servant.BaseUrl
   -> ExceptT Servant.ServantError IO SingleGifResponse
 
 random'
   :: Maybe Key
   -> Maybe Tag
+  -> HTTP.Manager
+  -> Servant.BaseUrl
   -> ExceptT Servant.ServantError IO RandomResponse
 
-search' :<|> translate' :<|> gif' :<|> random' = Servant.client api host __manager
-  where
-    host = Servant.BaseUrl Servant.Https "api.giphy.com" 443 "v1/gifs/"
+search' :<|> translate' :<|> gif' :<|> random' = Servant.client api
 
 -- $api
 --
@@ -350,25 +356,36 @@ search' :<|> translate' :<|> gif' :<|> random' = Servant.client api host __manag
 -- the 'Giphy' monad.
 --
 
+-- | Lift a partially applied request function into the Giphy monad.
+liftQuery
+  :: forall b (t :: (* -> *) -> * -> *) (m :: * -> *).
+     (Monad m, Reader.MonadTrans t, Reader.MonadReader GiphyContext (t m))
+  => (HTTP.Manager -> Servant.BaseUrl -> m b)
+  -> t m b
+liftQuery f = do
+  manager <- Reader.asks ctxManager
+  url <- Reader.asks ctxBaseUrl
+  lift $ f manager url
+
 -- | Issue a search request for the given query without specifying an offset.
 -- E.g. <https://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC>
 search
   :: Query
   -> Giphy SearchResponse
 search query = do
-  key <- Reader.asks configApiKey
-  lift $ search' (pure key) (pure $ PaginationOffset 0) (pure query)
+  key <- Reader.asks (configApiKey . ctxConfig)
+  liftQuery $ search' (pure key) (pure $ PaginationOffset 0) (pure query)
 
 -- | Issue a search request for the given query by specifying a
 -- pagination offset.
 -- E.g. <https://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC&offset=25>
 searchOffset
   :: Query
-  -> PaginationOffset
+  -> PaginationOffset -- ^ Offset as a number of items you want to skip.
   -> Giphy SearchResponse
 searchOffset query offset = do
-  key <- Reader.asks configApiKey
-  lift $ search' (pure key) (pure offset) (pure query)
+  key <- Reader.asks (configApiKey . ctxConfig)
+  liftQuery $ search' (pure key) (pure offset) (pure query)
 
 -- | Issue a request for a single GIF identified by its 'GifId'.
 -- E.g. <https://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
@@ -376,8 +393,8 @@ gif
   :: GifId
   -> Giphy SingleGifResponse
 gif gifid = do
-  key <- Reader.asks configApiKey
-  lift $ gif' gifid (pure key)
+  key <- Reader.asks (configApiKey . ctxConfig)
+  liftQuery $ gif' gifid (pure key)
 
 -- | Issue a translate request for a given phrase or term.
 -- E.g. <https://api.giphy.com/v1/gifs/translate?s=superman&api_key=dc6zaTOxFJmzC>
@@ -385,8 +402,8 @@ translate
   :: Phrase
   -> Giphy TranslateResponse
 translate phrase = do
-  key <- Reader.asks configApiKey
-  lift $ translate' (pure key) (pure phrase)
+  key <- Reader.asks (configApiKey . ctxConfig)
+  liftQuery $ translate' (pure key) (pure phrase)
 
 -- | Issue a request for a random GIF for the given (optional) tag.
 -- E.g. <https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=american+psycho>
@@ -394,8 +411,8 @@ random
   :: Maybe Tag
   -> Giphy RandomResponse
 random tag = do
-  key <- Reader.asks configApiKey
-  lift $ random' (pure key) tag
+  key <- Reader.asks (configApiKey . ctxConfig)
+  liftQuery $ random' (pure key) tag
 
 -- $giphy
 --
@@ -406,13 +423,30 @@ random tag = do
 data GiphyConfig = GiphyConfig { configApiKey :: Key }
   deriving (Show, Eq)
 
+-- | Internal data structure holding the base url, http manager and config.
+data GiphyContext = GiphyContext { ctxConfig  :: GiphyConfig
+                                 , ctxManager :: HTTP.Manager
+                                 , ctxBaseUrl :: Servant.BaseUrl }
+
 -- | The Giphy monad contains the execution context.
-type Giphy = Reader.ReaderT GiphyConfig (ExceptT Servant.ServantError IO)
+type Giphy a = Reader.ReaderT GiphyContext (ExceptT Servant.ServantError IO) a
 
 -- | You need to provide a 'GiphyConfig' to lift a 'Giphy' computation
 -- into 'MonadIO'.
 runGiphy :: MonadIO m => Giphy a -> GiphyConfig -> m (Either Servant.ServantError a)
-runGiphy = ((liftIO . runExceptT) .) . Reader.runReaderT
+runGiphy g conf = do
+  manager <- liftIO $ HTTP.newManager tlsManagerSettings
+  runGiphy' manager g conf
+
+-- | Same as 'runGiphy' but accepts an explicit 'HTTP.Manager' instead of
+-- implicitly creating one for you.
+runGiphy'
+  :: MonadIO m
+  => HTTP.Manager -- ^ This must be a TLS-enabled Manager
+  -> Giphy a
+  -> GiphyConfig
+  -> m (Either Servant.ServantError a)
+runGiphy' manager giphy conf = liftIO . runExceptT . Reader.runReaderT giphy $ GiphyContext conf manager baseUrl
 
 -- $lenses
 --
