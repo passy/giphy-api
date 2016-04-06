@@ -429,7 +429,7 @@ data GiphyContext = GiphyContext { ctxConfig  :: GiphyConfig
                                  , ctxBaseUrl :: Servant.BaseUrl }
 
 -- | The Giphy monad contains the execution context.
-type Giphy a = Reader.ReaderT GiphyContext (ExceptT Servant.ServantError IO) a
+type Giphy = Reader.ReaderT GiphyContext (ExceptT Servant.ServantError IO)
 
 -- | You need to provide a 'GiphyConfig' to lift a 'Giphy' computation
 -- into 'MonadIO'.
