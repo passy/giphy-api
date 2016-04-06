@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.0.0
+
+- Upgrade to Servant 0.6. When running the Giphy monad it is now possible
+  to provide a custom HTTP manager.
+
 ## v0.3.0.0
 
 - Upgrade to Servant 0.5. No changes in the API, but it's not in Stackage yet
