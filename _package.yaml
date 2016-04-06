@@ -33,8 +33,9 @@ library:
     - microlens
     - microlens-th
     - mtl
-    - servant >= 0.5
-    - servant-client >= 0.5
+    - servant >= 0.6
+    - servant-client >= 0.6
+    - transformers
     - http-api-data
     - http-client
     - http-client-tls
