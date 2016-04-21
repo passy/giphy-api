@@ -5,4 +5,4 @@ packages:
 extra-deps:
 - servant-0.6
 - servant-client-0.6
-resolver: nightly-2016-04-04
+resolver: nightly-2016-04-20
