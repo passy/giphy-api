@@ -2,4 +2,7 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
-resolver: lts-6.0
+extra-deps:
+- servant-0.6
+- servant-client-0.6
+resolver: nightly-2016-04-20
