@@ -1,6 +1,9 @@
 # giphy-api
 [![Build Status](https://travis-ci.org/passy/giphy-api.svg?branch=master)](https://travis-ci.org/passy/giphy-api)
 [![Hackage](http://img.shields.io/hackage/v/giphy-api.svg)](https://hackage.haskell.org/package/giphy-api)
+[![Stackage 6](http://stackage.org/package/giphy-api/badge/lts-6)](http://stackage.org/lts-6/package/giphy-api)
+[![Stackage Nightly](http://stackage.org/package/giphy-api/badge/nightly)](http://stackage.org/nightly/package/giphy-api)
+
 
 A Haskell wrapper for the [Giphy HTTP API](https://github.com/Giphy/GiphyAPI)
 using [servant-client](https://hackage.haskell.org/package/servant-client).
