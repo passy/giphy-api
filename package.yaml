@@ -39,8 +39,6 @@ library:
     - http-api-data
     - http-client
     - http-client-tls
-  other-modules:
-    - Paths_giphy_api
   exposed-modules:
     - Web.Giphy
 
@@ -70,8 +68,6 @@ executables:
     main: Main.hs
     source-dirs: app
     ghc-options: -threaded -rtsopts -with-rtsopts=-N
-    other-modules:
-      - Paths_giphy_api
     when:
       condition: flag(buildSample)
       then:
