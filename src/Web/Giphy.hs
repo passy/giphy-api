@@ -85,12 +85,9 @@ module Web.Giphy
   , translate
   , gif
   , random
-  -- NO
-  , liftQuery
   ) where
 
 import           Control.Monad             (MonadPlus (), forM, join, mzero)
-import           Control.Monad.Except      (ExceptT, runExceptT)
 import qualified Control.Monad.Reader      as Reader
 import           Control.Monad.Trans       (MonadIO (), lift, liftIO)
 import           Data.Aeson                ((.:), (.:?))
@@ -110,13 +107,13 @@ import qualified Servant.Client            as Servant
 import qualified Text.Read                 as Read
 import qualified Web.HttpApiData           as Data
 
-maybeParse :: (Monad m, MonadPlus m) => (a -> Maybe b) -> m a -> m b
+maybeParse :: MonadPlus m => (a -> Maybe b) -> m a -> m b
 maybeParse f = (maybe mzero return . f =<<)
 
-fromURI :: (Monad m, MonadPlus m) => m String -> m Servant.URI
+fromURI :: MonadPlus m => m String -> m Servant.URI
 fromURI = maybeParse URI.parseURI
 
-fromInt :: (Monad m, MonadPlus m) => m String -> m Int
+fromInt :: MonadPlus m => m String -> m Int
 fromInt = maybeParse Read.readMaybe
 
 -- $request
@@ -323,30 +320,22 @@ search'
   :: Maybe Key
   -> Maybe PaginationOffset
   -> Maybe Query
-  -> HTTP.Manager
-  -> Servant.BaseUrl
-  -> ExceptT Servant.ServantError IO SearchResponse
+  -> Servant.ClientM SearchResponse
 
 translate'
   :: Maybe Key
   -> Maybe Phrase
-  -> HTTP.Manager
-  -> Servant.BaseUrl
-  -> ExceptT Servant.ServantError IO TranslateResponse
+  -> Servant.ClientM TranslateResponse
 
 gif'
   :: GifId
   -> Maybe Key
-  -> HTTP.Manager
-  -> Servant.BaseUrl
-  -> ExceptT Servant.ServantError IO SingleGifResponse
+  -> Servant.ClientM SingleGifResponse
 
 random'
   :: Maybe Key
   -> Maybe Tag
-  -> HTTP.Manager
-  -> Servant.BaseUrl
-  -> ExceptT Servant.ServantError IO RandomResponse
+  -> Servant.ClientM RandomResponse
 
 search' :<|> translate' :<|> gif' :<|> random' = Servant.client api
 
@@ -356,17 +345,6 @@ search' :<|> translate' :<|> gif' :<|> random' = Servant.client api
 -- the 'Giphy' monad.
 --
 
--- | Lift a partially applied request function into the Giphy monad.
-liftQuery
-  :: forall b (t :: (* -> *) -> * -> *) (m :: * -> *).
-     (Monad m, Reader.MonadTrans t, Reader.MonadReader GiphyContext (t m))
-  => (HTTP.Manager -> Servant.BaseUrl -> m b)
-  -> t m b
-liftQuery f = do
-  manager <- Reader.asks ctxManager
-  url <- Reader.asks ctxBaseUrl
-  lift $ f manager url
-
 -- | Issue a search request for the given query without specifying an offset.
 -- E.g. <https://api.giphy.com/v1/gifs/search?q=funny+cat&api_key=dc6zaTOxFJmzC>
 search
@@ -374,7 +352,7 @@ search
   -> Giphy SearchResponse
 search query = do
   key <- Reader.asks (configApiKey . ctxConfig)
-  liftQuery $ search' (pure key) (pure $ PaginationOffset 0) (pure query)
+  lift $ search' (pure key) (pure $ PaginationOffset 0) (pure query)
 
 -- | Issue a search request for the given query by specifying a
 -- pagination offset.
@@ -385,7 +363,7 @@ searchOffset
   -> Giphy SearchResponse
 searchOffset query offset = do
   key <- Reader.asks (configApiKey . ctxConfig)
-  liftQuery $ search' (pure key) (pure offset) (pure query)
+  lift $ search' (pure key) (pure offset) (pure query)
 
 -- | Issue a request for a single GIF identified by its 'GifId'.
 -- E.g. <https://api.giphy.com/v1/gifs/feqkVgjJpYtjy?api_key=dc6zaTOxFJmzC>
@@ -394,7 +372,7 @@ gif
   -> Giphy SingleGifResponse
 gif gifid = do
   key <- Reader.asks (configApiKey . ctxConfig)
-  liftQuery $ gif' gifid (pure key)
+  lift $ gif' gifid (pure key)
 
 -- | Issue a translate request for a given phrase or term.
 -- E.g. <https://api.giphy.com/v1/gifs/translate?s=superman&api_key=dc6zaTOxFJmzC>
@@ -403,7 +381,7 @@ translate
   -> Giphy TranslateResponse
 translate phrase = do
   key <- Reader.asks (configApiKey . ctxConfig)
-  liftQuery $ translate' (pure key) (pure phrase)
+  lift $ translate' (pure key) (pure phrase)
 
 -- | Issue a request for a random GIF for the given (optional) tag.
 -- E.g. <https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=american+psycho>
@@ -412,7 +390,7 @@ random
   -> Giphy RandomResponse
 random tag = do
   key <- Reader.asks (configApiKey . ctxConfig)
-  liftQuery $ random' (pure key) tag
+  lift $ random' (pure key) tag
 
 -- $giphy
 --
@@ -423,13 +401,11 @@ random tag = do
 data GiphyConfig = GiphyConfig { configApiKey :: Key }
   deriving (Show, Eq)
 
--- | Internal data structure holding the base url, http manager and config.
-data GiphyContext = GiphyContext { ctxConfig  :: GiphyConfig
-                                 , ctxManager :: HTTP.Manager
-                                 , ctxBaseUrl :: Servant.BaseUrl }
+-- | Internal data structure holding the config.
+data GiphyContext = GiphyContext { ctxConfig  :: GiphyConfig }
 
 -- | The Giphy monad contains the execution context.
-type Giphy = Reader.ReaderT GiphyContext (ExceptT Servant.ServantError IO)
+type Giphy = Reader.ReaderT GiphyContext Servant.ClientM
 
 -- | You need to provide a 'GiphyConfig' to lift a 'Giphy' computation
 -- into 'MonadIO'.
@@ -446,7 +422,11 @@ runGiphy'
   -> Giphy a
   -> GiphyConfig
   -> m (Either Servant.ServantError a)
-runGiphy' manager giphy conf = liftIO . runExceptT . Reader.runReaderT giphy $ GiphyContext conf manager baseUrl
+runGiphy' manager giphy conf =
+  let env = Servant.ClientEnv manager baseUrl
+      runClientM' = flip Servant.runClientM
+  in
+      liftIO . runClientM' env . Reader.runReaderT giphy $ GiphyContext conf
 
 -- $lenses
 --
