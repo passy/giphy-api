@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.0.0
+
+- Upgrade to Servant 0.9. User-facing API should remain unchanged.
+
 ## v0.4.0.0
 
 - Upgrade to Servant 0.6. When running the Giphy monad it is now possible
