@@ -314,7 +314,7 @@ api :: Proxy.Proxy GiphyAPI
 api = Proxy.Proxy
 
 baseUrl :: Servant.BaseUrl
-baseUrl = Servant.BaseUrl Servant.Https "api.giphy.com" 443 "v1/gifs/"
+baseUrl = Servant.BaseUrl Servant.Https "api.giphy.com" 443 "/v1/gifs/"
 
 search'
   :: Maybe Key
