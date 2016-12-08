@@ -30,15 +30,16 @@ library:
   dependencies:
     - aeson
     - containers
-    - microlens
-    - microlens-th
-    - mtl
-    - servant >= 0.9
-    - servant-client >= 0.9
-    - transformers
     - http-api-data
     - http-client
     - http-client-tls
+    - microlens
+    - microlens-th
+    - mtl
+    - protolude
+    - servant >= 0.9
+    - servant-client >= 0.9
+    - transformers
   exposed-modules:
     - Web.Giphy
 
