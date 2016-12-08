@@ -8,6 +8,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE KindSignatures             #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 
 -- |
 -- Provides a Giphy monad that can be used to issue selected API calls under a
@@ -87,21 +88,23 @@ module Web.Giphy
   , random
   ) where
 
+import           Protolude          hiding ((<>))
 import           Control.Monad             (MonadPlus (), forM, join, mzero)
-import qualified Control.Monad.Reader      as Reader
 import           Control.Monad.Trans       (MonadIO (), lift, liftIO)
 import           Data.Aeson                ((.:), (.:?))
+import           Data.Monoid               ((<>))
+import           Data.String               (String)
+import           GHC.Generics              (Generic ())
+import           Network.HTTP.Client.TLS   (tlsManagerSettings)
+import           Servant.API               ((:<|>) (..), (:>))
+import qualified Control.Monad.Reader      as Reader
 import qualified Data.Aeson.Types          as Aeson
 import qualified Data.Map.Strict           as Map
-import           Data.Monoid               ((<>))
 import qualified Data.Proxy                as Proxy
 import qualified Data.Text                 as T
-import           GHC.Generics              (Generic ())
 import qualified Lens.Micro.TH             as Lens
 import qualified Network.HTTP.Client       as HTTP
-import           Network.HTTP.Client.TLS   (tlsManagerSettings)
 import qualified Network.URI               as URI
-import           Servant.API               ((:<|>) (..), (:>))
 import qualified Servant.API               as Servant
 import qualified Servant.Client            as Servant
 import qualified Text.Read                 as Read
