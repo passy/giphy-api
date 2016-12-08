@@ -8,6 +8,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE KindSignatures             #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 
 -- |
 -- Provides a Giphy monad that can be used to issue selected API calls under a
@@ -87,6 +88,7 @@ module Web.Giphy
   , random
   ) where
 
+import           Prelude
 import           Control.Monad             (MonadPlus (), forM, join, mzero)
 import qualified Control.Monad.Reader      as Reader
 import           Control.Monad.Trans       (MonadIO (), lift, liftIO)
