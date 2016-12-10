@@ -399,11 +399,11 @@ random tag = do
 --
 
 -- | Contains the key to access the API.
-data GiphyConfig = GiphyConfig { configApiKey :: Key }
+newtype GiphyConfig = GiphyConfig { configApiKey :: Key }
   deriving (Show, Eq)
 
 -- | Internal data structure holding the config.
-data GiphyContext = GiphyContext { ctxConfig  :: GiphyConfig }
+newtype GiphyContext = GiphyContext { ctxConfig  :: GiphyConfig }
 
 -- | The Giphy monad contains the execution context.
 type Giphy = Reader.ReaderT GiphyContext Servant.ClientM
