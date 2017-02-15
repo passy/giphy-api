@@ -32,7 +32,8 @@ main = hspec $ do
 
       it "parses a search response" $ do
         resp <- readFixture "search_response.json"
-        let res = either error id (Aeson.eitherDecode resp)
+        let res :: Giphy.SearchResponse
+            res = either error id (Aeson.eitherDecode resp)
         let item = res ^?! Giphy.searchItems . _head
 
         item ^. Giphy.gifId `shouldBe` "QgcQLZa6glP2w"
