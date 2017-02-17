@@ -2,4 +2,4 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
-resolver: nightly-2016-11-24
+resolver: lts-8.0

@@ -15,10 +15,11 @@ extra-source-files:
 
 ghc-options:
   - -Wall
-  - -fwarn-tabs
-  - -fwarn-incomplete-record-updates
-  - -fwarn-monomorphism-restriction
-  - -fwarn-unused-do-bind
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-uni-patterns
+  - -Wincomplete-record-updates
+  - -Wmonomorphism-restriction
 
 dependencies:
   - base >= 4.7 && < 5
