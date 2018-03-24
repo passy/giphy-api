@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.0.0
+
+- Upgrade to Servant 0.13.
+
 ## v0.5.2.0
 
 - Fix #12: Compilation error with base 4.7

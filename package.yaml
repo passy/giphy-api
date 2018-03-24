@@ -1,5 +1,5 @@
 name: giphy-api
-version: 0.5.2.0
+version: 0.6.0.0
 synopsis: Giphy HTTP API wrapper and CLI search tool.
 description: Please see README.md
 homepage: http://github.com/passy/giphy-api#readme
@@ -34,7 +34,7 @@ library:
     - microlens
     - microlens-th
     - mtl
-    - servant >= 0.9
+    - servant >= 0.13
     - servant-client >= 0.9
     - transformers
     - http-api-data
