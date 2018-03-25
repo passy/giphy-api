@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.0.1
+
+- Fix servant-client bounds.
+
 ## v0.6.0.0
 
 - Upgrade to Servant 0.13.
