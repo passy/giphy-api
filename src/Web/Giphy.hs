@@ -410,7 +410,7 @@ type Giphy = Reader.ReaderT GiphyContext Servant.ClientM
 
 -- | You need to provide a 'GiphyConfig' to lift a 'Giphy' computation
 -- into 'MonadIO'.
-runGiphy :: MonadIO m => Giphy a -> GiphyConfig -> m (Either Servant.ServantError a)
+runGiphy :: MonadIO m => Giphy a -> GiphyConfig -> m (Either Servant.ClientError a)
 runGiphy g conf = do
   manager <- liftIO $ HTTP.newManager tlsManagerSettings
   runGiphy' manager g conf
@@ -422,7 +422,7 @@ runGiphy'
   => HTTP.Manager -- ^ This must be a TLS-enabled Manager
   -> Giphy a
   -> GiphyConfig
-  -> m (Either Servant.ServantError a)
+  -> m (Either Servant.ClientError a)
 runGiphy' manager giphy conf =
   let env = Servant.ClientEnv manager baseUrl Nothing
       runClientM' = flip Servant.runClientM
