@@ -1,5 +1,5 @@
 name: giphy-api
-version: 0.6.0.1
+version: 0.7.0.0
 synopsis: Giphy HTTP API wrapper and CLI search tool.
 description: Please see README.md
 homepage: http://github.com/passy/giphy-api#readme
