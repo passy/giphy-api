@@ -424,7 +424,7 @@ runGiphy'
   -> GiphyConfig
   -> m (Either Servant.ClientError a)
 runGiphy' manager giphy conf =
-  let env = Servant.ClientEnv manager baseUrl Nothing
+  let env = Servant.mkClientEnv manager baseUrl
       runClientM' = flip Servant.runClientM
   in
       liftIO . runClientM' env . Reader.runReaderT giphy $ GiphyContext conf
